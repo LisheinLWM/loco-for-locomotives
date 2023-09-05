@@ -36,7 +36,11 @@ CREATE TABLE IF NOT EXISTS service_details (
     origin_station_id INT NOT NULL,
     destination_station_id INT NOT NULL,
     run_date TIMESTAMP NOT NULL,
-    PRIMARY KEY (service_details_id)
+    PRIMARY KEY (service_details_id),
+    FOREIGN KEY (company_id) REFERENCES company(company_id),
+    FOREIGN KEY (service_type_id) REFERENCES service_type(service_type_id),
+    FOREIGN KEY (origin_station_id) REFERENCES station(station_id),
+    FOREIGN KEY (destination_station_id) REFERENCES station(station_id)
 );
 
 CREATE TABLE IF NOT EXISTS delay_details (
