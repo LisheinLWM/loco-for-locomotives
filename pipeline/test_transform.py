@@ -4,7 +4,8 @@ import pandas as pd
 import pytest
 
 from transform import (
-    create_timestamp_from_date_and_time
+    create_timestamp_from_date_and_time,
+    replace_non_integers_with_none
 )
 
 
@@ -81,3 +82,6 @@ def test_create_timestamp_generates_correct_values():
     datetime_value = df.loc[0, "datetime"]
     assert datetime_value == pd.Timestamp("2023-09-05 12:30:45")
     assert isinstance(datetime_value, pd.Timestamp)
+
+
+def test_

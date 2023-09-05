@@ -65,23 +65,37 @@ def create_timestamp_from_date_and_time(df: DataFrame, new_column_name: str,
     return df
 
 
+def replace_non_integers_with_none(df: DataFrame, column_name: str) -> DataFrame:
+
+    df[column_name] = df[column_name].apply(lambda x: int(x)
+                                            if str(x).lstrip('-').isdigit()
+                                            else None)
+
+
+    return df
+
+
 if __name__ == "__main__":
 
     input_csv_path = "service_data.csv"
 
     service_df = load_data(input_csv_path)
 
-    print(service_df)
-
     service_df = create_timestamp_from_date_and_time(service_df,
                                                      "scheduled_arrival_datetime",
                                                      "scheduled_arrival_date",
                                                      "scheduled_arrival_time")
-
+    
     service_df = create_timestamp_from_date_and_time(service_df,
                                                      "origin_run_datetime",
                                                      "origin_run_date",
                                                      "origin_run_time")
+    
+    # Functions to replace a lateness value with None if the service was cancelled at origin
+    service_df = replace_non_integers_with_none(service_df, "arrival_lateness")
+    
+    print(service_df)
+
 
     output_csv_path = "transformed_service_data.csv"
 
