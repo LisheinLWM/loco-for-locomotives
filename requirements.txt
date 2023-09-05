@@ -1,4 +1,6 @@
 pandas
+pytest
+pylint
 psycopg2-binary
 pytest
 python-dotenv
