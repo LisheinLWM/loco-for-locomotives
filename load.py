@@ -21,12 +21,6 @@ def write_cancel_codes(conn: connection, codes_df: pd.DataFrame):
     conn.commit()
 
 
-def get_cancel_code_csv_data() -> pd.DataFrame:
-    '''extracts the cancel codes from the csv to a dataframe'''
-    cancel_codes_df = pd.read_csv(CODES_CSV)
-    return cancel_codes_df
-
-
 def get_connection(host: str, db_name: str, password: str, user: str):
     '''Connects to the database'''
     conn = psycopg2.connect(host=host,
@@ -42,5 +36,5 @@ if __name__ == "__main__":
     load_dotenv()
     conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
                           os.environ["DB_PASS"], os.environ["DB_USER"])
-    cancel_codes_df = get_cancel_code_csv_data()
+    cancel_codes_df = pd.read_csv(CODES_CSV)
     write_cancel_codes(conn, cancel_codes_df)
