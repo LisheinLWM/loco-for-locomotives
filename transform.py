@@ -28,10 +28,8 @@ def hhmmss_to_timestamp(time_string: str):
         hh_value = int(time_string[:2])
         mm_value = int(time_string[2:4])
         ss_value = int(time_string[4:])
-        datetime_value = datetime.now().replace(hour=hh_value,
-                                                minute=mm_value,
-                                                second=ss_value,
-                                                microsecond=0)
+        datetime_value = datetime.now().replace(hour=hh_value, minute=mm_value,
+                                                second=ss_value, microsecond=0)
         timestamp = datetime_value.timestamp()
         return timestamp
 
@@ -78,8 +76,10 @@ if __name__ == "__main__":
                                                      "scheduled_arrival_date",
                                                      "scheduled_arrival_time")
 
-    service_df = create_timestamp_from_date_and_time(service_df, "origin_run_datetime",
-                                                     "origin_run_date", "origin_run_time")
+    service_df = create_timestamp_from_date_and_time(service_df,
+                                                     "origin_run_datetime",
+                                                     "origin_run_date",
+                                                     "origin_run_time")
 
     output_csv_path = "transformed_service_data.csv"
 
