@@ -4,9 +4,11 @@ provider "aws" {
   secret_key = var.secret_key
 }
 
+
 data "aws_vpc" "cohort-8-VPC" {
   id = "vpc-0e0f897ec7ddc230d"
 }
+
 
 data "aws_subnet" "cohort-8-public-subnet-1" {
   vpc_id            = data.aws_vpc.cohort-8-VPC.id
@@ -14,17 +16,20 @@ data "aws_subnet" "cohort-8-public-subnet-1" {
   availability_zone = "eu-west-2a"
 }
 
+
 data "aws_subnet" "cohort-8-public-subnet-2" {
   vpc_id            = data.aws_vpc.cohort-8-VPC.id
   cidr_block        = "10.0.2.0/24"
   availability_zone = "eu-west-2b"
 }
 
+
 data "aws_subnet" "cohort-8-public-subnet-3" {
   vpc_id            = data.aws_vpc.cohort-8-VPC.id
   cidr_block        = "10.0.3.0/24"
   availability_zone = "eu-west-2c"
 }
+
 
 output "cohort-8-public-subnet-ids" {
   value = [
@@ -34,7 +39,6 @@ output "cohort-8-public-subnet-ids" {
   ]
 }
 
-# Live RDS
 
 resource "aws_security_group" "c8-locomotive-rds-security-group" {
   vpc_id = "vpc-0e0f897ec7ddc230d"
@@ -59,6 +63,7 @@ resource "aws_security_group" "c8-locomotive-rds-security-group" {
   }
 }
 
+
 resource "aws_db_instance" "c8-locomotive-rds" {
   identifier="c8-tf-locomotive-rds"
   allocated_storage    = 20
@@ -76,8 +81,29 @@ resource "aws_db_instance" "c8-locomotive-rds" {
   vpc_security_group_ids = ["${aws_security_group.c8-locomotive-rds-security-group.id}"]
 }
 
-# ECS Live Pipeline
 
+# ECS Archive Pipeline
 resource "aws_ecs_cluster" "cluster" {
   name = "locomotive-cluster"
+}
+
+resource "aws_security_group" "security-group-arc-pipeline" {
+  name        = "locomotive-arc-pipeline-sg"
+  description = "A security group for the pipeline made using terraform."
+
+  vpc_id = data.aws_vpc.cohort-8-VPC.id
+
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 }
