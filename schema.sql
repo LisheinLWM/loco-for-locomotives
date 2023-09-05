@@ -4,13 +4,13 @@ CREATE DATABASE loco_db;
 
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
-    code text NOT NULL UNIQUE,
-    reason text NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    reason TEXT NOT NULL,
     PRIMARY KEY (cancel_code_id)
 );
 
 CREATE TABLE IF NOT EXISTS company (
-    company_id SMALLINT GENERATED ALWAYS AS IDENTITY,
+    company_id INT GENERATED ALWAYS AS IDENTITY,
     company_name TEXT NOT NULL UNIQUE,
     PRIMARY KEY (company_id)
 );
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS company (
 CREATE TABLE IF NOT EXISTS station (
     station_id INT GENERATED ALWAYS AS IDENTITY,
     crs TEXT NOT NULL UNIQUE,
-    station_name TEXT NOT NULL UNIQUE,
+    station_name TEXT NOT NULL,
     PRIMARY KEY (station_id)
 );
 
@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS service_details (
 
 CREATE TABLE IF NOT EXISTS delay_details (
     delay_details_id INT GENERATED ALWAYS AS IDENTITY,
-    service_details_id INT,
+    service_details_id INT NOT NULL,
     arrival_lateness SMALLINT,
     scheduled_arrival TIMESTAMP,
     PRIMARY KEY (delay_details_id),
