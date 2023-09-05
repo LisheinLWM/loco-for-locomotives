@@ -23,12 +23,15 @@ def write_cancel_codes(conn: connection, codes_df: pd.DataFrame):
 
 def get_connection(host: str, db_name: str, password: str, user: str):
     '''Connects to the database'''
-    conn = psycopg2.connect(host=host,
-                            dbname=db_name,
-                            password=password,
-                            user=user,
-                            cursor_factory=RealDictCursor)
-    return conn
+    try:
+        conn = psycopg2.connect(host=host,
+                                dbname=db_name,
+                                password=password,
+                                user=user,
+                                cursor_factory=RealDictCursor)
+        return conn
+    except Exception as e:
+        print(f"Error {e} occured!")
 
 
 if __name__ == "__main__":
