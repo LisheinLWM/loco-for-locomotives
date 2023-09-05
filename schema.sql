@@ -4,14 +4,14 @@ CREATE DATABASE loco_db;
 
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
-    code text NOT NULL,
+    code text NOT NULL UNIQUE,
     reason text NOT NULL,
     PRIMARY KEY (cancel_code_id)
 );
 
 CREATE TABLE IF NOT EXISTS company (
     company_id SMALLINT GENERATED ALWAYS AS IDENTITY,
-    company_name TEXT NOT NULL,
+    company_name TEXT NOT NULL UNIQUE,
     PRIMARY KEY (company_id)
 );
 
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS service_type (
 CREATE TABLE IF NOT EXISTS service_details (
     service_details_id INT GENERATED ALWAYS AS IDENTITY,
     company_id INT NOT NULL,
-    -- service_uid TEXT,
+    service_uid TEXT NOT NULL,
     service_type_id INT NOT NULL,
     origin_station_id INT NOT NULL,
     destination_station_id INT NOT NULL,
@@ -46,20 +46,19 @@ CREATE TABLE IF NOT EXISTS service_details (
 CREATE TABLE IF NOT EXISTS delay_details (
     delay_details_id INT GENERATED ALWAYS AS IDENTITY,
     service_details_id INT,
-    arrival_lateness SMALLINT
+    arrival_lateness SMALLINT,
     scheduled_arrival TIMESTAMP,
     PRIMARY KEY (delay_details_id),
-    FOREIGN KEY(service_details_id )
-    REFERENCES service_details(service_details_id),
+    FOREIGN KEY(service_details_id) REFERENCES service_details(service_details_id)
 );
 
 CREATE TABLE IF NOT EXISTS cancellation (
     cancellation_id INT GENERATED ALWAYS AS IDENTITY,
     service_details_id INT NOT NULL,
-    -- station_id INT NOT NULL,
-    cancellation_time TIMESTAMP,
+    station_id INT NOT NULL,
     cancel_code_id INT NOT NULL,
     PRIMARY KEY (cancellation_id),
     FOREIGN KEY (service_details_id) REFERENCES service_details(service_details_id),
-    FOREIGN KEY (cancel_code_id) REFERENCES cancel_code(cancel_code_id)
+    FOREIGN KEY (cancel_code_id) REFERENCES cancel_code(cancel_code_id),
+    FOREIGN KEY (station_id) REFERENCES station(station_id)  
 );
