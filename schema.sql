@@ -59,27 +59,3 @@ CREATE TABLE IF NOT EXISTS cancellation (
     FOREIGN KEY (service_details_id) REFERENCES service_details(service_details_id),
     FOREIGN KEY (cancel_code_id) REFERENCES cancel_code(cancel_code_id)
 );
-
--- CREATE TABLE plant (
---     plant_entry_id SERIAL PRIMARY KEY,
---     species_id SMALLINT NOT NULL,
---     temperature FLOAT,
---     soil_moisture FLOAT,
---     last_watered TIMESTAMP,
---     recording_taken TIMESTAMP NOT NULL,
---     sunlight_id SMALLINT,
---     botanist_id SMALLINT, 
---     cycle_id SMALLINT,
---     CONSTRAINT fk_sunlight_id
---         FOREIGN KEY(sunlight_id)
---             REFERENCES sunlight(sunlight_id),
---     CONSTRAINT fk_botanist_id
---         FOREIGN KEY(botanist_id)
---             REFERENCES botanist(botanist_id),
---     CONSTRAINT fk_cycle_id
---         FOREIGN KEY(cycle_id)
---             REFERENCES cycle(cycle_id),
---     CONSTRAINT fk_species_id
---         FOREIGN KEY(species_id)
---             REFERENCES species(species_id)
--- );
