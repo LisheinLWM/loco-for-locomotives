@@ -6,4 +6,7 @@ venv
 *.tfstate.backup
 *.terraform.lock.hcl
 *.terraform.tfstate.lock.info
+*.csv
+*.pyc
+*__pycache__
 
