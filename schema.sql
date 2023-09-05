@@ -1,7 +1,6 @@
 CREATE DATABASE loco_db;
 \c loco_db;
 
-
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
     code TEXT NOT NULL UNIQUE,
@@ -27,6 +26,9 @@ CREATE TABLE IF NOT EXISTS service_type (
     service_type_name TEXT NOT NULL UNIQUE,
     PRIMARY KEY(service_type_id)
 );
+
+INSERT INTO service_type (service_type_name)
+VALUES ('bus'), ('train');
        
 CREATE TABLE IF NOT EXISTS service_details (
     service_details_id INT GENERATED ALWAYS AS IDENTITY,
