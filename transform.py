@@ -67,9 +67,11 @@ def create_timestamp_from_date_and_time(df: DataFrame, new_column_name: str,
 
 if __name__ == "__main__":
 
-    input_csv_path = ""
+    input_csv_path = "service_data.csv"
 
     service_df = load_data(input_csv_path)
+
+    print(service_df)
 
     service_df = create_timestamp_from_date_and_time(service_df,
                                                      "scheduled_arrival_datetime",
