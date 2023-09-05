@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
     code TEXT NOT NULL UNIQUE,
     reason TEXT NOT NULL,
+    abbreviation TEXT,
     PRIMARY KEY (cancel_code_id)
 );
 
