@@ -1,3 +1,4 @@
+code,reason,abbreviation
 AA,Waiting acceptance into off Network Rail network Terminal or Yard,ACCEPTANCE
 AC,Waiting train preparation or completion of TOPS list/RT3973,TRAIN PREP
 AD,Off Network Rail network Terminal or Yard staff shortage including reactionary congestion caused by the shortage,WTG STAFF
