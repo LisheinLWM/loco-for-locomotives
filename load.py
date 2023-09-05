@@ -11,11 +11,14 @@ CODES_CSV = "cancel_codes.csv"
 
 def write_cancel_codes(conn: connection, codes_df: pd.DataFrame):
     '''writes the cancel codes from the dataframe to the database'''
-    records = cancel_codes_df.to_records(index=False)
+    records = codes_df.to_records(index=False)
     with conn.cursor() as cur:
         sql_query = '''
-            INSERT INTO '''
+            INSERT INTO cancel_code (code, reason, abbreviation)
+            VALUES (%s, %s, %s)'''
         cur.executemany(sql_query, records)
+
+    conn.commit()
 
 
 def get_cancel_code_csv_data() -> pd.DataFrame:
