@@ -124,8 +124,7 @@ def obtain_relevant_data_by_service(station_crs: str, service_date: date, authen
         data = relevant_fields(journey, service)
         list_of_services.append(data)
 
-        if len(list_of_services) > 10:
-            return list_of_services
+    return list_of_services
 
 
 def convert_to_csv(list_of_services: list) -> None:
