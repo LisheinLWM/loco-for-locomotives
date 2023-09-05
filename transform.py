@@ -46,8 +46,20 @@ def create_timestamp_from_date_and_time(df: DataFrame, new_column_name: str,
     containing times, and creates a new column
     with datetime timestamps
     """
-    df[date_column_name] = pd.to_datetime(df[date_column_name])
-    df[time_column_name] = pd.to_datetime(df[time_column_name], format='%H%M%S')
+    try:
+        df[date_column_name] = pd.to_datetime(df[date_column_name], format='%Y-%m-%d')
+
+    except ValueError as e:
+        print(f"Error: invalid values in date column")
+        return None
+    
+    try:
+        df[time_column_name] = pd.to_datetime(df[time_column_name], format='%H%M%S')
+    
+    except ValueError as e:
+        print(f"Error: invalid values in time column")
+        return None
+    
     df[new_column_name] = df[date_column_name] + pd.to_timedelta(df[time_column_name].dt.strftime('%H:%M:%S'))
     return df
 
