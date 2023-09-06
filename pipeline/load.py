@@ -73,7 +73,49 @@ def insert_station_data(conn: connection, data: pd.DataFrame) -> None:
     with conn.cursor() as cur:
         execute_values(cur, """INSERT INTO station (crs, station_name) VALUES
                         %s ON CONFLICT DO NOTHING;""", stations)
+    conn.commit()
 
+
+def insert_service_details_data(conn: connection, data: pd.DataFrame) -> None:
+    """Inserts each service into the service details table with the corresponding
+    foreign key IDs"""
+
+    details = data[["service_uid", "company_name", "service_type", "origin_crs",
+                    "planned_final_crs", "origin_run_datetime"]].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO service_details (service_uid, company_id, service_type_id,
+                       origin_station_id, destination_station_id, run_date) VALUES (%s, (SELECT company_id
+                    FROM company WHERE company_name = %s), (SELECT service_type_id FROM service_type
+                       WHERE service_type_name = %s), (SELECT station_id FROM station WHERE crs = %s),
+                       (SELECT station_id FROM station WHERE crs = %s), %s) ON CONFLICT DO NOTHING;""", details)
+    conn.commit()
+
+
+def insert_delay_details(conn: connection, data: pd.DataFrame) -> None:
+    """Inserts all services where the arrival lateness is great that 0 into the delay details table"""
+
+    details = data[["service_uid", "arrival_lateness",
+                    "scheduled_arrival_datetime"]]
+    delays = details[data["arrival_lateness"] > 0].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO delay_details (service_details_id, arrival_lateness, scheduled_arrival)
+                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s),
+                        %s, %s) ON CONFLICT DO NOTHING;""", delays)
+    conn.commit()
+
+
+def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
+
+    details = data[["service_uid", "cancellation_station_crs",
+                   "destination_reached_crs", "cancel_code"]]
+    cancellations = details[data["cancel_code"].notna()].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO cancellation (service_details_id, cancelled_station_id, reached_station_id, cancel_code_id)
+                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s), (SELECT station_id FROM station WHERE crs = %s),
+                        (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))""", cancellations)
     conn.commit()
 
 
@@ -88,5 +130,7 @@ if __name__ == "__main__":
     write_cancel_codes(conn, cancel_codes_df)
 
     data = pd.read_csv("transformed_service_data.csv")
-    # insert_company_data(conn, data)
-    # insert_station_data(conn, data)
+    insert_company_data(conn, data)
+    insert_station_data(conn, data)
+    insert_service_details_data(conn, data)
+    insert_cancellations(conn, data)
