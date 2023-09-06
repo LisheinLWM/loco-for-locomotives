@@ -90,11 +90,6 @@ def check_values_in_column_have_three_characters(df: DataFrame, column_name: str
 
     if drop_row:
         df.dropna(subset=[column_name], inplace=True)
-    #     df[column_name] = df[column_name].astype(str)
-    
-    # else:
-    #     df[column_name] = df[column_name].astype(object)
-    #     df[column_name] = df[column_name].apply(lambda x: None if pd.isna(x) else x)
 
     return df
 
