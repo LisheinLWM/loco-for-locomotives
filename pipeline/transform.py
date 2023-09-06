@@ -122,7 +122,7 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
     return service_df
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 
     input_csv_path = "service_data.csv"
 
