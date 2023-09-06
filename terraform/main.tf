@@ -42,11 +42,11 @@ output "cohort-8-public-subnet-ids" {
 
 resource "aws_security_group" "c8-locomotive-rds-security-group" {
   vpc_id = "vpc-0e0f897ec7ddc230d"
-  name = "c8-tf-locomotive-rds-security-group"
+  name   = "c8-tf-locomotive-rds-security-group"
   ingress {
-    from_port = 5432
-    to_port = 5432
-    protocol = "tcp"
+    from_port   = 5432
+    to_port     = 5432
+    protocol    = "tcp"
     cidr_blocks = ["86.155.163.236/32"]
   }
   ingress {
@@ -65,20 +65,39 @@ resource "aws_security_group" "c8-locomotive-rds-security-group" {
 
 
 resource "aws_db_instance" "c8-locomotive-rds" {
-  identifier="c8-tf-locomotive-rds"
-  allocated_storage    = 20
-  db_name              = var.database_name
-  engine               = "postgres"
-  engine_version       = "15"
-  instance_class       = "db.t3.micro"
-  username             = var.database_username
-  password             = var.database_password
-  parameter_group_name = "default.postgres15"
-  skip_final_snapshot  = true
+  identifier                   = "c8-tf-locomotive-rds"
+  allocated_storage            = 20
+  db_name                      = var.database_name
+  engine                       = "postgres"
+  engine_version               = "15"
+  instance_class               = "db.t3.micro"
+  username                     = var.database_username
+  password                     = var.database_password
+  parameter_group_name         = "default.postgres15"
+  skip_final_snapshot          = true
   performance_insights_enabled = false
-  db_subnet_group_name = "public_subnet_group"
-  publicly_accessible = true
-  vpc_security_group_ids = ["${aws_security_group.c8-locomotive-rds-security-group.id}"]
+  db_subnet_group_name         = "public_subnet_group"
+  publicly_accessible          = true
+  vpc_security_group_ids       = ["${aws_security_group.c8-locomotive-rds-security-group.id}"]
+}
+
+resource "aws_ecr_repository" "loco-arc-pipeline-ecr" {
+  name         = "loco-arc-tf-pipeline-ecr"
+  force_delete = true
+
+}
+
+
+resource "aws_ecr_repository" "loco-live-pipeline-ecr" {
+  name         = "loco-live-tf-pipeline-ecr"
+  force_delete = true
+
+}
+
+
+resource "aws_ecr_repository" "loco-streamlit-ecr" {
+  name         = "loco-streamlit-tf-ecr"
+  force_delete = true
 }
 
 
@@ -126,8 +145,8 @@ resource "aws_ecs_task_definition" "arc-pipeline-task-definition" {
 
   container_definitions = jsonencode([
     {
-      name      = "loco-pipeline-ecr",
-      image     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/loco-pipeline-ecr",
+      name  = "loco-pipeline-ecr",
+      image = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/loco-pipeline-ecr",
 
       essential = true
 
@@ -162,11 +181,11 @@ resource "aws_ecs_task_definition" "arc-pipeline-task-definition" {
           value = var.database_password
         },
         {
-          name = "ACCESS_KEY_ID"
+          name  = "ACCESS_KEY_ID"
           value = var.access_key
         },
         {
-          name = "SECRET_ACCESS_KEY"
+          name  = "SECRET_ACCESS_KEY"
           value = var.secret_key
         }
       ]
@@ -184,3 +203,106 @@ resource "aws_ecs_task_definition" "arc-pipeline-task-definition" {
   ])
 }
 
+resource "aws_iam_role" "ecs-loco-task-execution-role" {
+  name = "ecs-loco-task-execution-role"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      },
+      {
+        Action = "sts:AssumeRole",
+        Principal = {
+          Service = "scheduler.amazonaws.com"
+        },
+        Effect = "Allow",
+        Sid    = ""
+      }
+    ]
+  })
+  inline_policy {
+    name = "ecs-task-inline-policy"
+    policy = jsonencode({
+      Version = "2012-10-17",
+      Statement = [
+        {
+          Action   = "ecs:DescribeTaskDefinition",
+          Effect   = "Allow",
+          Resource = "*",
+          Condition = {
+            "ArnLike" : {
+              "ecs:cluster" : aws_ecs_cluster.cluster.arn
+            }
+          }
+        },
+        {
+          Action   = "ecs:DescribeTasks",
+          Effect   = "Allow",
+          Resource = "*",
+          Condition = {
+            "ArnLike" : {
+              "ecs:cluster" : aws_ecs_cluster.cluster.arn
+            }
+          }
+        },
+        {
+          Action   = "ecs:RunTask",
+          Effect   = "Allow",
+          Resource = "*",
+          Condition = {
+            "ArnLike" : {
+              "ecs:cluster" : aws_ecs_cluster.cluster.arn
+            }
+          }
+        },
+        {
+          Action   = "iam:PassRole",
+          Effect   = "Allow",
+          Resource = "*"
+        }
+      ]
+    })
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs-task-execution-role-policy-attachment" {
+  role       = aws_iam_role.ecs-loco-task-execution-role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+
+resource "aws_scheduler_schedule" "c8-loco-schedule-arc-pipeline" {
+  name                         = "c8-loco-tf-schedule-arc-pipeline"
+  schedule_expression_timezone = "Europe/London"
+  description                  = "Every mid night at 00:05 Get the transport data and upload it into database."
+  state                        = "ENABLED"
+  group_name                   = "default"
+
+  flexible_time_window {
+    mode = "OFF"
+  }
+
+  schedule_expression = "cron(5 0 * * ? *)"
+
+  target {
+    arn      = aws_ecs_cluster.cluster.arn
+    role_arn = aws_iam_role.ecs-loco-task-execution-role.arn
+
+    ecs_parameters {
+      task_definition_arn = aws_ecs_task_definition.arc-pipeline-task-definition.arn
+      task_count          = 1
+      launch_type         = "FARGATE"
+      network_configuration {
+        assign_public_ip = true
+        security_groups  = [aws_security_group.security-group-arc-pipeline.id]
+        subnets          = ["subnet-03b1a3e1075174995", "subnet-0cec5bdb9586ed3c4", "subnet-0667517a2a13e2a6b"]
+      }
+    }
+  }
+}
