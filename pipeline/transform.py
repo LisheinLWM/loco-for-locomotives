@@ -78,7 +78,12 @@ def replace_non_integers_with_none(df: DataFrame, column_name: str) -> DataFrame
 
 
 def check_values_in_column_have_three_characters(df: DataFrame, column_name: str, drop_row: bool) -> DataFrame:
-
+    """
+    Checks that values in the specified column
+    have a length of 3 characters. Optionally drops
+    rows if the value is not 3 characters long;
+    otherwise, replaces the value with None
+    """
     df[column_name] = df[column_name].apply(lambda x: str(x).strip().upper()
                                             if len(str(x).strip()) == 3
                                             else None)
@@ -92,6 +97,29 @@ def check_values_in_column_have_three_characters(df: DataFrame, column_name: str
     #     df[column_name] = df[column_name].apply(lambda x: None if pd.isna(x) else x)
 
     return df
+
+
+def generate_list_of_valid_cancel_codes(cancel_codes_url: str) -> DataFrame:
+    """
+    Loads a DataFrame from the given URL and
+    extracts a list of known cancel codes
+    from the DataFrame
+    """
+    cancel_codes_df = pd.read_html(cancel_codes_url, flavor="bs4", attrs={"class": "wikitable"})[0]
+    valid_codes_list = cancel_codes_df["Code"].tolist()
+    return valid_codes_list
+
+
+def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: list) -> DataFrame:
+    """
+    Determines if a value is a valid cancel code,
+    based on the list; otherwise, the value is
+    replaced with None
+    """
+    service_df["cancel_code"] = service_df["cancel_code"].apply(lambda x: str(x).strip().upper()
+                                                                if str(x).strip().upper() in valid_codes_list
+                                                                else None)
+    return service_df
 
 
 if __name__ == "__main__":
@@ -109,9 +137,7 @@ if __name__ == "__main__":
                                                      "origin_run_datetime",
                                                      "origin_run_date",
                                                      "origin_run_time")
-    
-    print(service_df["origin_crs"].dtype)
-    
+        
     # Works to replace a lateness value with None if the service was cancelled at origin
     service_df = replace_non_integers_with_none(service_df, "arrival_lateness")
     
@@ -120,7 +146,9 @@ if __name__ == "__main__":
     service_df = check_values_in_column_have_three_characters(service_df, "destination_reached_crs", True)
     service_df = check_values_in_column_have_three_characters(service_df, "cancellation_station_crs", False)
 
-    print(service_df["origin_crs"].dtype)
+    cancel_codes_url = "https://wiki.openraildata.com/index.php/Delay_Attribution_Guide"
+    valid_cancel_codes = generate_list_of_valid_cancel_codes(cancel_codes_url)
+    service_df = determine_if_cancel_code_is_valid(service_df, valid_cancel_codes)
 
     output_csv_path = "transformed_service_data.csv"
 
