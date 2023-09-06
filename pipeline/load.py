@@ -3,8 +3,9 @@
 import os
 
 import pandas as pd
+import numpy as np
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, execute_values
 from psycopg2.extensions import connection
 from dotenv import load_dotenv
 
@@ -61,17 +62,20 @@ def insert_company_data(conn: connection, data: pd.DataFrame) -> None:
 def insert_station_data(conn: connection, data: pd.DataFrame) -> None:
     """Inserts station data to the database"""
 
-    crs_data = data[['origin_crs', 'planned_final_crs',
-                    'destination_reached_crs', 'cancellation_station_crs']].values
-    codes = [code for code in crs_data.flatten() if not pd.isna(code)]
-    name_data = data[['origin_stn_name', 'planned_final_destination',
-                      'destination_reached_name', 'cancellation_station_name']].values
-    names = [name for name in name_data.flatten() if not pd.isna(name)]
-    data_to_insert = list(zip(codes, names))
+    col_sets = [['origin_crs', 'origin_stn_name'],
+                ['planned_final_crs', 'planned_final_destination'],
+                ['destination_reached_crs', 'destination_reached_name'],
+                ['cancellation_station_crs', 'cancellation_station_name']]
+
+    dfs = [data[cs].to_numpy() for cs in col_sets]
+
+    stations = set([tuple(x) for x in np.concatenate(
+        dfs).tolist() if not pd.isna(x[0])])
 
     with conn.cursor() as cur:
-        cur.executemany("""INSERT INTO station (crs, station_name) VALUES
-                        (%s, %s) ON CONFLICT DO NOTHING;""", data_to_insert)
+        execute_values(cur, """INSERT INTO station (crs, station_name) VALUES
+                        %s ON CONFLICT DO NOTHING;""", stations)
+
     conn.commit()
 
 
