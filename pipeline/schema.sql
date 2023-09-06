@@ -1,5 +1,12 @@
+DROP DATABASE IF EXISTS loco_db;
 CREATE DATABASE loco_db;
+
 \c loco_db;
+
+CREATE SCHEMA previous_day_data;
+CREATE SCHEMA all_data;
+
+SET search_path TO previous_day_data;
 
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
@@ -28,9 +35,6 @@ CREATE TABLE IF NOT EXISTS service_type (
     PRIMARY KEY(service_type_id)
 );
 
-INSERT INTO service_type (service_type_name)
-VALUES ('bus'), ('train');
-       
 CREATE TABLE IF NOT EXISTS service_details (
     service_details_id INT GENERATED ALWAYS AS IDENTITY,
     company_id INT NOT NULL,
@@ -65,3 +69,6 @@ CREATE TABLE IF NOT EXISTS cancellation (
     FOREIGN KEY (cancel_code_id) REFERENCES cancel_code(cancel_code_id),
     FOREIGN KEY (station_id) REFERENCES station(station_id)  
 );
+
+INSERT INTO service_type (service_type_name)
+VALUES ('bus'), ('train');
