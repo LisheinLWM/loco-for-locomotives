@@ -26,3 +26,7 @@ variable "database_port" {
   description = "Port used to access RDS database"
 }
 
+variable "database_ip" {
+  description = "IP/HOST URL of the RDS database"
+}
+
