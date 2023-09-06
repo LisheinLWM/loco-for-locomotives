@@ -66,11 +66,30 @@ def create_timestamp_from_date_and_time(df: DataFrame, new_column_name: str,
 
 
 def replace_non_integers_with_none(df: DataFrame, column_name: str) -> DataFrame:
-
+    """
+    Replaces values with None if they aren't
+    a positive or negative integer
+    """
     df[column_name] = df[column_name].apply(lambda x: int(x)
                                             if str(x).lstrip('-').isdigit()
                                             else None)
 
+    return df
+
+
+def check_values_in_column_have_three_characters(df: DataFrame, column_name: str, drop_row: bool) -> DataFrame:
+
+    df[column_name] = df[column_name].apply(lambda x: str(x).strip().upper()
+                                            if len(str(x).strip()) == 3
+                                            else None)
+
+    if drop_row:
+        df.dropna(subset=[column_name], inplace=True)
+    #     df[column_name] = df[column_name].astype(str)
+    
+    # else:
+    #     df[column_name] = df[column_name].astype(object)
+    #     df[column_name] = df[column_name].apply(lambda x: None if pd.isna(x) else x)
 
     return df
 
@@ -91,11 +110,17 @@ if __name__ == "__main__":
                                                      "origin_run_date",
                                                      "origin_run_time")
     
-    # Functions to replace a lateness value with None if the service was cancelled at origin
+    print(service_df["origin_crs"].dtype)
+    
+    # Works to replace a lateness value with None if the service was cancelled at origin
     service_df = replace_non_integers_with_none(service_df, "arrival_lateness")
     
-    print(service_df)
+    service_df = check_values_in_column_have_three_characters(service_df, "origin_crs", True)
+    service_df = check_values_in_column_have_three_characters(service_df, "planned_final_crs", True)
+    service_df = check_values_in_column_have_three_characters(service_df, "destination_reached_crs", True)
+    service_df = check_values_in_column_have_three_characters(service_df, "cancellation_station_crs", False)
 
+    print(service_df["origin_crs"].dtype)
 
     output_csv_path = "transformed_service_data.csv"
 
