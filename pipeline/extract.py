@@ -68,8 +68,7 @@ def relevant_fields(journey: dict, service: dict) -> dict:
                 arrival_lateness = 0
         if location["displayAs"] == "CANCELLED_CALL":
             service_cancelled = location
-            if not arrival_lateness:
-                arrival_lateness = "CANCELLED AT ORIGIN"
+
     try:
         cancel_crs = service_cancelled["crs"]
         cancel_station = service_cancelled["description"]
@@ -89,6 +88,7 @@ def relevant_fields(journey: dict, service: dict) -> dict:
     relevant_data = {
         "service_uid": service["serviceUid"],
         "company_name": service["atocName"],
+        "service_type": service["serviceType"],
         "origin_crs": journey["locationDetail"]["origin"][0]["tiploc"][:3],
         "origin_stn_name": journey["locationDetail"]["origin"][0]["description"],
         "origin_run_time": journey["locationDetail"]["origin"][0]["workingTime"],
@@ -135,7 +135,7 @@ def convert_to_csv(list_of_services: list) -> None:
     dataframe.to_csv(csv_filename, index=False)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     load_dotenv()
 
