@@ -135,7 +135,7 @@ def convert_to_csv(list_of_services: list) -> None:
     dataframe.to_csv(csv_filename, index=False)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     load_dotenv()
 
