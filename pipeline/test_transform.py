@@ -5,7 +5,9 @@ import pytest
 
 from transform import (
     create_timestamp_from_date_and_time,
-    replace_non_integers_with_none
+    replace_non_integers_with_none,
+    generate_list_of_valid_cancel_codes,
+    determine_if_cancel_code_is_valid
 )
 
 
@@ -15,7 +17,8 @@ def generate_test_dataframe_with_date_and_time_columns():
     date strings and a column of time strings
     """
     data = {"date_column": ["2023-09-05", "2023-09-06"],
-            "time_column": ["123045", "081530"]}
+            "time_column": ["123045", "081530"],
+            "cancel_code": ["AA", "tabbycat"]}
     return pd.DataFrame(data)
 
 
@@ -84,4 +87,28 @@ def test_create_timestamp_generates_correct_values():
     assert isinstance(datetime_value, pd.Timestamp)
 
 
-def test_
+def test_cancel_code_list_generation():
+    """
+    Tests whether generate_list_of_valid_cancel_codes()
+    correctly processes html data and returns a list
+    of codes
+    """
+    cancel_codes_df = pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
+                                    'Cause': ['text1', 'text2', 'text3', 'text4'],
+                                    'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
+    cancel_codes_df.to_html('mock_cancel_codes.html', classes='wikitable', index=False, border=3, justify='center')
+    valid_code_list = generate_list_of_valid_cancel_codes('mock_cancel_codes.html')
+    assert isinstance(valid_code_list, list)
+    assert valid_code_list == ['AA', 'AC', 'AD', 'ZZ']
+
+
+def test_valid_and_invalid_cancel_codes_are_processed_correctly():
+
+    cancel_codes_df = pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
+                                    'Cause': ['text1', 'text2', 'text3', 'text4'],
+                                    'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
+    cancel_codes_df.to_html('mock_cancel_codes.html', classes='wikitable', index=False, border=3, justify='center')
+    valid_code_list = generate_list_of_valid_cancel_codes('mock_cancel_codes.html')
+    service_df = generate_test_dataframe_with_date_and_time_columns()
+    service_df = determine_if_cancel_code_is_valid(service_df, valid_code_list)
+    assert service_df['cancel_code'].tolist() == ["AA", None]

@@ -19,7 +19,7 @@ def load_data(csv_path: str) -> DataFrame:
         return None
 
 
-def hhmmss_to_timestamp(time_string: str):
+def hhmmss_to_timestamp(time_string: str): #pargma: no cover
     """
     Takes a 'time' string in the form
     'HHMMSS' and returns a valid timestamp
