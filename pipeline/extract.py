@@ -66,6 +66,7 @@ def relevant_fields(journey: dict, service: dict) -> dict:
                 "realtimeGbttArrivalLateness", None)
             if arrival_lateness is None:
                 arrival_lateness = 0
+            reached_crs = location['crs']
         if location["displayAs"] == "CANCELLED_CALL":
             service_cancelled = location
 
@@ -78,18 +79,18 @@ def relevant_fields(journey: dict, service: dict) -> dict:
         cancel_station = None
         cancel_code = None
 
-    if arrival_lateness == "CANCELLED AT ORIGIN":
-        destination_reached_crs = journey["locationDetail"]["origin"][0]["tiploc"][:3]
+    if arrival_lateness is None:
+        destination_reached_crs = service["locations"][0]["crs"]
         destination_reached_name = journey["locationDetail"]["origin"][0]["description"]
     else:
-        destination_reached_crs = journey["locationDetail"]["destination"][0]["tiploc"][:3]
+        destination_reached_crs = reached_crs
         destination_reached_name = journey["locationDetail"]["destination"][0]["description"]
 
     relevant_data = {
         "service_uid": service["serviceUid"],
         "company_name": service["atocName"],
         "service_type": service["serviceType"],
-        "origin_crs": journey["locationDetail"]["origin"][0]["tiploc"][:3],
+        "origin_crs": service["locations"][0]["crs"],
         "origin_stn_name": journey["locationDetail"]["origin"][0]["description"],
         "origin_run_time": journey["locationDetail"]["origin"][0]["workingTime"],
         "origin_run_date": journey["runDate"],

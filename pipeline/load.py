@@ -58,6 +58,23 @@ def insert_company_data(conn: connection, data: pd.DataFrame) -> None:
     conn.commit()
 
 
+def insert_station_data(conn: connection, data: pd.DataFrame) -> None:
+    """Inserts station data to the database"""
+
+    crs_data = data[['origin_crs', 'planned_final_crs',
+                    'destination_reached_crs', 'cancellation_station_crs']].values
+    codes = [code for code in crs_data.flatten() if not pd.isna(code)]
+    name_data = data[['origin_stn_name', 'planned_final_destination',
+                      'destination_reached_name', 'cancellation_station_name']].values
+    names = [name for name in name_data.flatten() if not pd.isna(name)]
+    data_to_insert = list(zip(codes, names))
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO station (crs, station_name) VALUES
+                        (%s, %s) ON CONFLICT DO NOTHING;""", data_to_insert)
+    conn.commit()
+
+
 if __name__ == "__main__":
 
     load_dotenv()
@@ -65,8 +82,9 @@ if __name__ == "__main__":
                           os.environ["DB_PASS"], os.environ["DB_USER"])
 
     switch_between_schemas("previous_day_data")
-    cancel_codes_df = pd.read_csv(CODES_CSV)
-    write_cancel_codes(conn, cancel_codes_df)
+    # cancel_codes_df = pd.read_csv(CODES_CSV)
+    # write_cancel_codes(conn, cancel_codes_df)
 
     data = pd.read_csv("transformed_service_data.csv")
-    insert_company_data(conn, data)
+    # insert_company_data(conn, data)
+    insert_station_data(conn, data)
