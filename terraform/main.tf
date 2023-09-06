@@ -107,3 +107,80 @@ resource "aws_security_group" "security-group-arc-pipeline" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 }
+
+resource "aws_ecs_task_definition" "arc-pipeline-task-definition" {
+  family       = "arc-pipeline-tf-task-definition"
+  network_mode = "awsvpc"
+
+  requires_compatibilities = ["FARGATE"]
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "X86_64"
+  }
+
+  cpu    = "1024"
+  memory = "3072"
+
+  execution_role_arn = "arn:aws:iam::129033205317:role/ecsTaskExecutionRole"
+
+  container_definitions = jsonencode([
+    {
+      name      = "loco-pipeline-ecr",
+      image     = "129033205317.dkr.ecr.eu-west-2.amazonaws.com/loco-pipeline-ecr",
+
+      essential = true
+
+      portMappings = [
+        {
+          containerPort : 80,
+          hostPort : 80
+          protocol    = "tcp"
+          appProtocol = "http"
+        }
+      ]
+
+      environment = [
+        {
+          name  = "DATABASE_NAME"
+          value = var.database_name
+        },
+        {
+          name  = "DATABASE_IP"
+          value = var.database_ip
+        },
+        {
+          name  = "DATABASE_PORT"
+          value = var.database_port
+        },
+        {
+          name  = "DATABASE_USERNAME"
+          value = var.database_username
+        },
+        {
+          name  = "DATABASE_PASSWORD"
+          value = var.database_password
+        },
+        {
+          name = "ACCESS_KEY_ID"
+          value = var.access_key
+        },
+        {
+          name = "SECRET_ACCESS_KEY"
+          value = var.secret_key
+        }
+      ]
+
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-create-group"  = "true"
+          "awslogs-group"         = "/ecs/"
+          "awslogs-region"        = "eu-west-2"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+}
+
