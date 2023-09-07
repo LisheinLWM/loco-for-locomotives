@@ -118,6 +118,16 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
     return service_df
 
 
+def delete_columns(service_df: DataFrame, column_names: list[str]):
+    """
+    Deletes the specified columns from the
+    DataFrame
+    """
+    service_df = service_df.drop(columns=column_names)
+    return service_df
+
+
+
 if __name__ == "__main__":
 
     input_csv_path = "service_data.csv"
@@ -133,6 +143,11 @@ if __name__ == "__main__":
                                                      "origin_run_datetime",
                                                      "origin_run_date",
                                                      "origin_run_time")
+    
+    service_df = service_df.drop(columns=["scheduled_arrival_date",
+                                          "scheduled_arrival_time",
+                                          "origin_run_date",
+                                          "origin_run_time"])
 
     # Works to replace a lateness value with None if the service was cancelled at origin
     service_df = replace_non_integers_with_none(service_df, "arrival_lateness")
