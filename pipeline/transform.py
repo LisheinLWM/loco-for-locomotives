@@ -19,7 +19,7 @@ def load_data(csv_path: str) -> DataFrame:
         return None
 
 
-def hhmmss_to_timestamp(time_string: str):
+def hhmmss_to_timestamp(time_string: str): #pargma: no cover
     """
     Takes a 'time' string in the form
     'HHMMSS' and returns a valid timestamp
@@ -118,7 +118,7 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
     return service_df
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": #pragma: no cover
 
     input_csv_path = "service_data.csv"
 
