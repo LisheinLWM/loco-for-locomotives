@@ -4,5 +4,5 @@ pylint
 psycopg2-binary
 pytest
 python-dotenv
-
-
+html5lib
+bs4
