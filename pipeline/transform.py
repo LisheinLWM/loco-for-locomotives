@@ -20,7 +20,7 @@ def load_data(csv_path: str) -> DataFrame:
         return None
 
 
-def hhmmss_to_timestamp(time_string: str):
+def hhmmss_to_timestamp(time_string: str): #pargma: no cover
     """
     Takes a 'time' string in the form
     'HHMMSS' and returns a valid timestamp
@@ -132,6 +132,11 @@ def run_transform(input_csv_path):
                                                      "origin_run_datetime",
                                                      "origin_run_date",
                                                      "origin_run_time")
+    
+    service_df = service_df.drop(columns=["scheduled_arrival_date",
+                                          "scheduled_arrival_time",
+                                          "origin_run_date",
+                                          "origin_run_time"])
 
     # Works to replace a lateness value with None if the service was cancelled at origin
     service_df = replace_non_integers_with_none(service_df, "arrival_lateness")
