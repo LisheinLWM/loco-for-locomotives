@@ -4,7 +4,7 @@ from unittest.mock import patch, MagicMock
 import datetime
 import requests
 
-service_info = {
+darton_service_info = {
     "serviceUid": "P44650",
     "runDate": "2023-09-06",
     "serviceType": "train",
@@ -71,60 +71,6 @@ service_info = {
                     "associatedRunDate": "2023-09-06"
                 }
             ]
-        }
-    ]
-}
-
-darton = {
-    "location": {
-        "name": "Darton",
-        "crs": "DRT",
-        "tiploc": "DRTN",
-        "country": "gb",
-        "system": "nr"
-    },
-    "filter": None,
-    "services": [
-        {
-            "locationDetail": {
-                "realtimeActivated": True,
-                "tiploc": "DRTN",
-                "crs": "DRT",
-                "description": "Darton",
-                "gbttBookedArrival": "1514",
-                "gbttBookedDeparture": "1514",
-                "origin": [
-                    {
-                        "tiploc": "LEEDS",
-                        "description": "Leeds",
-                        "workingTime": "143200",
-                        "publicTime": "1432"
-                    }
-                ],
-                "destination": [
-                    {
-                        "tiploc": "SHEFFLD",
-                        "description": "Sheffield",
-                        "workingTime": "155100",
-                        "publicTime": "1551"
-                    }
-                ],
-                "isCall": True,
-                "isPublicCall": True,
-                "realtimeArrival": "1514",
-                "realtimeArrivalActual": False,
-                "realtimeDeparture": "1515",
-                "realtimeDepartureActual": False,
-                "displayAs": "CALL"
-            },
-            "serviceUid": "P44650",
-            "runDate": "2023-09-06",
-            "trainIdentity": "2L69",
-            "runningIdentity": "2L69",
-            "atocCode": "NT",
-            "atocName": "Northern",
-            "serviceType": "train",
-            "isPassenger": True
         }
     ]
 }
@@ -230,7 +176,7 @@ def test_relevant_fields_returns_correct_type(mock_get_service_data):
 
     fake_connection = MagicMock()
     fake_connection.status_code = 200
-    fake_connection.json.return_value = service_info
+    fake_connection.json.return_value = darton_service_info
     mock_get_service_data.return_value = fake_connection
     journey = darton_service
     service_uid = "P44650"
