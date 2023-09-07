@@ -2,7 +2,6 @@ from extract import (get_authentication, relevant_fields,
                      get_service_data_by_service, get_service_data_by_station)
 from unittest.mock import patch, MagicMock
 import datetime
-import pytest
 import requests
 
 service_info = {
