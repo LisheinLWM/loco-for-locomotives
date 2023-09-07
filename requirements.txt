@@ -7,3 +7,4 @@ python-dotenv
 requests
 pytest-cov
 pytest-timeout
+pytest-coverage
