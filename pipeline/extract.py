@@ -66,10 +66,10 @@ def relevant_fields(journey: dict, service: dict) -> dict:
                 "realtimeGbttArrivalLateness", None)
             if arrival_lateness is None:
                 arrival_lateness = 0
+            reached_crs = location['crs']
         if location["displayAs"] == "CANCELLED_CALL":
             service_cancelled = location
-            if not arrival_lateness:
-                arrival_lateness = "CANCELLED AT ORIGIN"
+
     try:
         cancel_crs = service_cancelled["crs"]
         cancel_station = service_cancelled["description"]
@@ -79,17 +79,18 @@ def relevant_fields(journey: dict, service: dict) -> dict:
         cancel_station = None
         cancel_code = None
 
-    if arrival_lateness == "CANCELLED AT ORIGIN":
-        destination_reached_crs = journey["locationDetail"]["origin"][0]["tiploc"][:3]
+    if arrival_lateness is None:
+        destination_reached_crs = service["locations"][0]["crs"]
         destination_reached_name = journey["locationDetail"]["origin"][0]["description"]
     else:
-        destination_reached_crs = journey["locationDetail"]["destination"][0]["tiploc"][:3]
+        destination_reached_crs = reached_crs
         destination_reached_name = journey["locationDetail"]["destination"][0]["description"]
 
     relevant_data = {
         "service_uid": service["serviceUid"],
         "company_name": service["atocName"],
-        "origin_crs": journey["locationDetail"]["origin"][0]["tiploc"][:3],
+        "service_type": service["serviceType"],
+        "origin_crs": service["locations"][0]["crs"],
         "origin_stn_name": journey["locationDetail"]["origin"][0]["description"],
         "origin_run_time": journey["locationDetail"]["origin"][0]["workingTime"],
         "origin_run_date": journey["runDate"],
@@ -135,7 +136,7 @@ def convert_to_csv(list_of_services: list) -> None:
     dataframe.to_csv(csv_filename, index=False)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
 
     load_dotenv()
 
