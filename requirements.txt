@@ -8,3 +8,5 @@ requests
 pytest-cov
 pytest-timeout
 pytest-coverage
+html5lib
+bs4
