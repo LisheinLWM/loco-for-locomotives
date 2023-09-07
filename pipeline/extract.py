@@ -153,16 +153,16 @@ def create_download_folders() -> None:
 def run_extract(authentication_realtime):
 
     stations = {
-    "BRI": "Bristol Temple Meads",
-    "WAT": "London Waterloo",
-    "BHM": "Birmingham New Street",
-    "NCL": "Newcastle",
-    "YRK": "York",
-    "MAN": "Manchester Piccadilly",
-    "LIV": "Liverpool Lime Street",
-    "LDS": "Leeds",
-    "PAD": "London Paddington",
-    "SHF": "Sheffield"
+    "BRI": "Bristol Temple Meads"
+    # "WAT": "London Waterloo",
+    # "BHM": "Birmingham New Street",
+    # "NCL": "Newcastle",
+    # "YRK": "York",
+    # "MAN": "Manchester Piccadilly",
+    # "LIV": "Liverpool Lime Street",
+    # "LDS": "Leeds",
+    # "PAD": "London Paddington",
+    # "SHF": "Sheffield"
     }
 
     yesterday = datetime.now()-timedelta(days=1)
