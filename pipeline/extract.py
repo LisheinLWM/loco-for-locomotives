@@ -1,8 +1,11 @@
 """Extracts data from the Realtime Trains API and creates a CSV with the relevant data."""
 
 import base64
+from datetime import date, datetime, timedelta
+import os
 from os import environ
-from datetime import date
+import time
+
 
 import requests
 from dotenv import load_dotenv
@@ -119,11 +122,14 @@ def obtain_relevant_data_by_service(station_crs: str, service_date: date, authen
 
     for journey in station_data["services"]:
 
-        service_uid = journey["serviceUid"]
-        service = get_service_data_by_service(
-            service_uid, service_date, authentication)
-        data = relevant_fields(journey, service)
-        list_of_services.append(data)
+        try:
+            service_uid = journey["serviceUid"]
+            service = get_service_data_by_service(
+                service_uid, service_date, authentication)
+            data = relevant_fields(journey, service)
+            list_of_services.append(data)
+        except:
+            print(service_uid, station_crs)
 
     return list_of_services
 
@@ -132,8 +138,52 @@ def convert_to_csv(list_of_services: list) -> None:
     """Takes in a list of services and creates a csv file with a row for each service."""
 
     dataframe = pd.DataFrame(list_of_services)
-    csv_filename = "service_data.csv"
+    csv_filename = "data/service_data.csv"
     dataframe.to_csv(csv_filename, index=False)
+
+
+def create_download_folders() -> None:
+    """Creates a folder with the name "data" if it doesn't already exist"""
+
+    folder_exists = os.path.exists("data")
+    if not folder_exists:
+        os.makedirs("data")
+
+
+def run_extract(authentication_realtime):
+
+    stations = {
+    "BRI": "Bristol Temple Meads",
+    "WAT": "London Waterloo",
+    "BHM": "Birmingham New Street",
+    "NCL": "Newcastle",
+    "YRK": "York",
+    "MAN": "Manchester Piccadilly",
+    "LIV": "Liverpool Lime Street",
+    "LDS": "Leeds",
+    "PAD": "London Paddington",
+    "SHF": "Sheffield"
+    }
+
+    yesterday = datetime.now()-timedelta(days=1)
+    yesterday_date = yesterday.strftime("%Y/%m/%d")
+
+    start_time = time.time()
+    print("Extracting...")
+
+    create_download_folders()
+
+    list_of_services = []
+    for station_crs in stations.keys():
+        services = obtain_relevant_data_by_service(
+            station_crs, yesterday_date, authentication_realtime)
+        list_of_services.extend(services)
+
+    convert_to_csv(list_of_services)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Total extraction time: {elapsed_time:.2f} seconds.")
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -145,9 +195,4 @@ if __name__ == "__main__":  # pragma: no cover
     authentication_realtime = get_authentication(
         username_realtime, password_realtime)
 
-    CRS = "MAN"
-    DATE_OF_SERVICE = "2023/09/03"
-
-    services = obtain_relevant_data_by_service(
-        CRS, DATE_OF_SERVICE, authentication_realtime)
-    convert_to_csv(services)
+    run_extract(authentication_realtime)

@@ -1,6 +1,7 @@
 '''Uploads data to the database'''
 
 import os
+import time
 
 import pandas as pd
 import numpy as np
@@ -27,7 +28,7 @@ def get_connection(host: str, db_name: str, password: str, user: str):
         print(f"Error {e} occured!")
 
 
-def switch_between_schemas(schema_name: str) -> None:
+def switch_between_schemas(conn, schema_name: str) -> None:
     """Switches to the schema by the schema name provided"""
 
     with conn.cursor() as cur:
@@ -115,8 +116,36 @@ def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO cancellation (service_details_id, cancelled_station_id, reached_station_id, cancel_code_id)
                         VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s), (SELECT station_id FROM station WHERE crs = %s),
-                        (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))""", cancellations)
+                        (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))
+                        ON CONFLICT DO NOTHING""", cancellations)
     conn.commit()
+
+
+def run_load(conn):
+
+    print("Loading data into database.")
+    start_time = time.time()
+    switch_between_schemas(conn, "previous_day_data")
+
+    data = pd.read_csv("data/transformed_service_data.csv")
+    insert_company_data(conn, data)
+    insert_station_data(conn, data)
+    insert_service_details_data(conn, data)
+    insert_delay_details(conn, data)
+    insert_cancellations(conn, data)
+
+    switch_between_schemas(conn, "all_data")
+    insert_company_data(conn, data)
+    insert_station_data(conn, data)
+    insert_service_details_data(conn, data)
+    insert_delay_details(conn, data)
+    insert_cancellations(conn, data)
+
+    os.remove("data/transformed_service_data.csv")
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Loading completed in: {elapsed_time:.2f} seconds.")
 
 
 if __name__ == "__main__":
@@ -125,12 +154,4 @@ if __name__ == "__main__":
     conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
                           os.environ["DB_PASS"], os.environ["DB_USER"])
 
-    switch_between_schemas("previous_day_data")
-    cancel_codes_df = pd.read_csv(CODES_CSV)
-    write_cancel_codes(conn, cancel_codes_df)
-
-    data = pd.read_csv("transformed_service_data.csv")
-    insert_company_data(conn, data)
-    insert_station_data(conn, data)
-    insert_service_details_data(conn, data)
-    insert_cancellations(conn, data)
+    run_load(conn)
