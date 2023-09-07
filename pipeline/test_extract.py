@@ -72,7 +72,9 @@ service_info = {
                     "associatedRunDate": "2023-09-06"
                 }
             ]
-        }]}
+        }
+    ]
+}
 
 darton = {
     "location": {
@@ -128,9 +130,51 @@ darton = {
     ]
 }
 
+darton_service = {
+    "locationDetail": {
+        "realtimeActivated": True,
+        "tiploc": "DRTN",
+        "crs": "DRT",
+        "description": "Darton",
+        "gbttBookedArrival": "1514",
+        "gbttBookedDeparture": "1514",
+        "origin": [
+            {
+                "tiploc": "LEEDS",
+                "description": "Leeds",
+                "workingTime": "143200",
+                "publicTime": "1432"
+            }
+        ],
+        "destination": [
+            {
+                "tiploc": "SHEFFLD",
+                "description": "Sheffield",
+                "workingTime": "155100",
+                "publicTime": "1551"
+            }
+        ],
+        "isCall": True,
+        "isPublicCall": True,
+        "realtimeArrival": "1514",
+        "realtimeArrivalActual": False,
+        "realtimeDeparture": "1515",
+        "realtimeDepartureActual": False,
+        "displayAs": "CALL"
+    },
+    "serviceUid": "P44650",
+    "runDate": "2023-09-06",
+    "trainIdentity": "2L69",
+    "runningIdentity": "2L69",
+    "atocCode": "NT",
+    "atocName": "Northern",
+    "serviceType": "train",
+    "isPassenger": True
+}
+
 
 def test_get_authentication_returns_str():
-    assert isinstance(get_authentication('harold', 'potato'), str)
+    assert isinstance(get_authentication('yes', 'simple'), str)
 
 
 @patch('extract.requests.get')
@@ -189,26 +233,10 @@ def test_relevant_fields_returns_correct_type(mock_get_service_data):
     fake_connection.status_code = 200
     fake_connection.json.return_value = service_info
     mock_get_service_data.return_value = fake_connection
-    for journey in darton["services"]:
-        service_uid = journey["serviceUid"]
-        service = get_service_data_by_service(
-            service_uid, "2023-09-06", 'yes')
-    assert isinstance(relevant_fields(service, journey), dict)
-
-# @patch('extract.get_service_data_by_service')
-# def test_relevant_fields_returns_correct_type(mock_get_service_data):
-
-#     fake_connection = MagicMock()
-#     fake_connection.status_code = 200
-#     fake_connection.json.return_value = {
-#         "tiploc": "SHEFFLD",
-#         "description": "Sheffield",
-#         "workingTime": "155100",
-#         "publicTime": "1551"
-#     }
-#     mock_get_service_data.return_value = fake_connection
-#     for journey in darton["services"]:
-#         service_uid = journey["serviceUid"]
-#         service = get_service_data_by_service(
-#             service_uid, "2023-09-06", 'yes')
-#     assert isinstance(relevant_fields(service, journey), dict)
+    journey = darton_service
+    service_uid = "P44650"
+    service = get_service_data_by_service(service_uid, "2023-09-06", 'yes')
+    print(service)
+    print("\n")
+    print(service["locations"])
+    assert isinstance(relevant_fields(journey, service), dict)
