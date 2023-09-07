@@ -122,11 +122,14 @@ def obtain_relevant_data_by_service(station_crs: str, service_date: date, authen
 
     for journey in station_data["services"]:
 
-        service_uid = journey["serviceUid"]
-        service = get_service_data_by_service(
-            service_uid, service_date, authentication)
-        data = relevant_fields(journey, service)
-        list_of_services.append(data)
+        try:
+            service_uid = journey["serviceUid"]
+            service = get_service_data_by_service(
+                service_uid, service_date, authentication)
+            data = relevant_fields(journey, service)
+            list_of_services.append(data)
+        except:
+            print(service_uid, station_crs)
 
     return list_of_services
 
@@ -147,6 +150,42 @@ def create_download_folders() -> None:
         os.makedirs("data")
 
 
+def run_extract(authentication_realtime):
+
+    stations = {
+    "BRI": "Bristol Temple Meads",
+    "WAT": "London Waterloo",
+    "BHM": "Birmingham New Street",
+    "NCL": "Newcastle",
+    "YRK": "York",
+    "MAN": "Manchester Piccadilly",
+    "LIV": "Liverpool Lime Street",
+    "LDS": "Leeds",
+    "PAD": "London Paddington",
+    "SHF": "Sheffield"
+    }
+
+    yesterday = datetime.now()-timedelta(days=1)
+    yesterday_date = yesterday.strftime("%Y/%m/%d")
+
+    start_time = time.time()
+    print("Extracting...")
+
+    create_download_folders()
+
+    list_of_services = []
+    for station_crs in stations.keys():
+        services = obtain_relevant_data_by_service(
+            station_crs, yesterday_date, authentication_realtime)
+        list_of_services.extend(services)
+
+    convert_to_csv(list_of_services)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Total extraction time: {elapsed_time:.2f} seconds.")
+
+
 if __name__ == "__main__":  # pragma: no cover
 
     load_dotenv()
@@ -156,18 +195,4 @@ if __name__ == "__main__":  # pragma: no cover
     authentication_realtime = get_authentication(
         username_realtime, password_realtime)
 
-    CRS = "MAN"
-    yesterday = datetime.now()-timedelta(days=1)
-    yesterday_date = yesterday.strftime("%Y/%m/%d")
-
-    start_time = time.time()
-    print("Extracting...")
-
-    create_download_folders()
-    services = obtain_relevant_data_by_service(
-        CRS, yesterday_date, authentication_realtime)
-    convert_to_csv(services)
-
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"Total extraction time: {elapsed_time:.2f} seconds.")
+    run_extract(authentication_realtime)

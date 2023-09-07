@@ -119,9 +119,7 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
     return service_df
 
 
-if __name__ == "__main__":
-
-    input_csv_path = "data/service_data.csv"
+def run_transform(input_csv_path):
 
     service_df = load_data(input_csv_path)
 
@@ -155,3 +153,10 @@ if __name__ == "__main__":
     output_csv_path = "data/transformed_service_data.csv"
     service_df.to_csv(output_csv_path)
     os.remove("data/service_data.csv")
+
+    print("Transform complete")
+
+if __name__ == "__main__":
+
+    input_csv_path = "data/service_data.csv"
+    run_transform(input_csv_path)
