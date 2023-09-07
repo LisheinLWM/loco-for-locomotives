@@ -2,6 +2,131 @@ from extract import (get_authentication, relevant_fields,
                      get_service_data_by_service, get_service_data_by_station)
 from unittest.mock import patch, MagicMock
 import datetime
+import pytest
+import requests
+
+service_info = {
+    "serviceUid": "P44650",
+    "runDate": "2023-09-06",
+    "serviceType": "train",
+    "isPassenger": True,
+    "trainIdentity": "2L69",
+    "powerType": "DMU",
+    "trainClass": "S",
+    "atocCode": "NT",
+    "atocName": "Northern",
+    "performanceMonitored": True,
+    "origin": [
+        {
+            "tiploc": "LEEDS",
+            "description": "Leeds",
+            "workingTime": "143200",
+            "publicTime": "1432"
+        }
+    ],
+    "destination": [
+        {
+            "tiploc": "SHEFFLD",
+            "description": "Sheffield",
+            "workingTime": "155100",
+            "publicTime": "1551"
+        }
+    ],
+    "locations": [
+        {
+            "realtimeActivated": True,
+            "tiploc": "LEEDS",
+            "crs": "LDS",
+            "description": "Leeds",
+            "gbttBookedDeparture": "1432",
+            "origin": [
+                {
+                    "tiploc": "LEEDS",
+                    "description": "Leeds",
+                    "workingTime": "143200",
+                    "publicTime": "1432"
+                }
+            ],
+            "destination": [
+                {
+                    "tiploc": "SHEFFLD",
+                    "description": "Sheffield",
+                    "workingTime": "155100",
+                    "publicTime": "1551"
+                }
+            ],
+            "isCall": True,
+            "isPublicCall": True,
+            "realtimeDeparture": "1432",
+            "realtimeDepartureActual": True,
+            "platform": "17",
+            "platformConfirmed": True,
+            "platformChanged": False,
+            "line": "F",
+            "lineConfirmed": True,
+            "displayAs": "ORIGIN",
+            "associations": [
+                {
+                    "type": "next",
+                    "associatedUid": "P44602",
+                    "associatedRunDate": "2023-09-06"
+                }
+            ]
+        }]}
+
+darton = {
+    "location": {
+        "name": "Darton",
+        "crs": "DRT",
+        "tiploc": "DRTN",
+        "country": "gb",
+        "system": "nr"
+    },
+    "filter": None,
+    "services": [
+        {
+            "locationDetail": {
+                "realtimeActivated": True,
+                "tiploc": "DRTN",
+                "crs": "DRT",
+                "description": "Darton",
+                "gbttBookedArrival": "1514",
+                "gbttBookedDeparture": "1514",
+                "origin": [
+                    {
+                        "tiploc": "LEEDS",
+                        "description": "Leeds",
+                        "workingTime": "143200",
+                        "publicTime": "1432"
+                    }
+                ],
+                "destination": [
+                    {
+                        "tiploc": "SHEFFLD",
+                        "description": "Sheffield",
+                        "workingTime": "155100",
+                        "publicTime": "1551"
+                    }
+                ],
+                "isCall": True,
+                "isPublicCall": True,
+                "realtimeArrival": "1514",
+                "realtimeArrivalActual": False,
+                "realtimeDeparture": "1515",
+                "realtimeDepartureActual": False,
+                "displayAs": "CALL"
+            },
+            "serviceUid": "P44650",
+            "runDate": "2023-09-06",
+            "trainIdentity": "2L69",
+            "runningIdentity": "2L69",
+            "atocCode": "NT",
+            "atocName": "Northern",
+            "serviceType": "train",
+            "isPassenger": True
+        }
+    ]
+}
 
 
 def test_get_authentication_returns_str():
@@ -24,6 +149,24 @@ def test_get_service_data_by_station(mock_get):
 
 
 @patch('extract.requests.get')
+def test_get_service_data_by_station_timed_out(mock_get):
+    fake_connection = MagicMock()
+    fake_connection.status_code = 200
+    fake_connection.json.return_value = {
+        "error": "Timeout: The request could not be completed.", "Station": "BRI"}
+    expected_result = {
+        "error": "Timeout: The request could not be completed.", "Station": "BRI"}
+
+    mock_get.return_value = fake_connection
+    mock_get.side_effect = requests.exceptions.Timeout
+
+    json_data = get_service_data_by_station(
+        'BRI', datetime.date.today(), 'yes')
+
+    assert json_data == expected_result
+
+
+@patch('extract.requests.get')
 def test_get_service_data_by_service(mock_get):
     fake_connection = MagicMock()
     fake_connection.status_code = 200
@@ -39,5 +182,33 @@ def test_get_service_data_by_service(mock_get):
                          "company_name": "Great Northern"}
 
 
-def test_relevant_fields():
-    pass
+@patch('extract.requests.get')
+def test_relevant_fields_returns_correct_type(mock_get_service_data):
+
+    fake_connection = MagicMock()
+    fake_connection.status_code = 200
+    fake_connection.json.return_value = service_info
+    mock_get_service_data.return_value = fake_connection
+    for journey in darton["services"]:
+        service_uid = journey["serviceUid"]
+        service = get_service_data_by_service(
+            service_uid, "2023-09-06", 'yes')
+    assert isinstance(relevant_fields(service, journey), dict)
+
+# @patch('extract.get_service_data_by_service')
+# def test_relevant_fields_returns_correct_type(mock_get_service_data):
+
+#     fake_connection = MagicMock()
+#     fake_connection.status_code = 200
+#     fake_connection.json.return_value = {
+#         "tiploc": "SHEFFLD",
+#         "description": "Sheffield",
+#         "workingTime": "155100",
+#         "publicTime": "1551"
+#     }
+#     mock_get_service_data.return_value = fake_connection
+#     for journey in darton["services"]:
+#         service_uid = journey["serviceUid"]
+#         service = get_service_data_by_service(
+#             service_uid, "2023-09-06", 'yes')
+#     assert isinstance(relevant_fields(service, journey), dict)

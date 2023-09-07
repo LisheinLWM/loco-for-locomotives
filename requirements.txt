@@ -4,5 +4,6 @@ pylint
 psycopg2-binary
 pytest
 python-dotenv
-
-
+requests
+pytest-cov
+pytest-timeout

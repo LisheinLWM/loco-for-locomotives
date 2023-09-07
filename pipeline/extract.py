@@ -32,7 +32,7 @@ def get_service_data_by_station(station_crs: str, service_date: date, authentica
     try:
         response = requests.get(url, headers=data, timeout=10)
     except requests.exceptions.Timeout:
-        response = {
+        return {
             "error": "Timeout: The request could not be completed.", "Station": station_crs}
 
     return response.json()
