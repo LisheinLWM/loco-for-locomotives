@@ -1,4 +1,5 @@
 """Pipeline Script: Transforming pipeline data"""
+import os
 
 from datetime import datetime
 import pandas as pd
@@ -120,7 +121,7 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
 
 if __name__ == "__main__":
 
-    input_csv_path = "service_data.csv"
+    input_csv_path = "data/service_data.csv"
 
     service_df = load_data(input_csv_path)
 
@@ -151,6 +152,6 @@ if __name__ == "__main__":
     service_df = determine_if_cancel_code_is_valid(
         service_df, valid_cancel_codes)
 
-    output_csv_path = "transformed_service_data.csv"
-
+    output_csv_path = "data/transformed_service_data.csv"
     service_df.to_csv(output_csv_path)
+    os.remove("data/service_data.csv")

@@ -1,8 +1,11 @@
 """Extracts data from the Realtime Trains API and creates a CSV with the relevant data."""
 
 import base64
+from datetime import date, datetime, timedelta
+import os
 from os import environ
-from datetime import date
+import time
+
 
 import requests
 from dotenv import load_dotenv
@@ -132,8 +135,16 @@ def convert_to_csv(list_of_services: list) -> None:
     """Takes in a list of services and creates a csv file with a row for each service."""
 
     dataframe = pd.DataFrame(list_of_services)
-    csv_filename = "service_data.csv"
+    csv_filename = "data/service_data.csv"
     dataframe.to_csv(csv_filename, index=False)
+
+
+def create_download_folders() -> None:
+    """Creates a folder with the name "data" if it doesn't already exist"""
+
+    folder_exists = os.path.exists("data")
+    if not folder_exists:
+        os.makedirs("data")
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -146,8 +157,17 @@ if __name__ == "__main__":  # pragma: no cover
         username_realtime, password_realtime)
 
     CRS = "MAN"
-    DATE_OF_SERVICE = "2023/09/03"
+    yesterday = datetime.now()-timedelta(days=1)
+    yesterday_date = yesterday.strftime("%Y/%m/%d")
 
+    start_time = time.time()
+    print("Extracting...")
+
+    create_download_folders()
     services = obtain_relevant_data_by_service(
-        CRS, DATE_OF_SERVICE, authentication_realtime)
+        CRS, yesterday_date, authentication_realtime)
     convert_to_csv(services)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f"Total extraction time: {elapsed_time:.2f} seconds.")

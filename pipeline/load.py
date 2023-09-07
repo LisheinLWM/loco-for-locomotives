@@ -115,7 +115,8 @@ def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO cancellation (service_details_id, cancelled_station_id, reached_station_id, cancel_code_id)
                         VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s), (SELECT station_id FROM station WHERE crs = %s),
-                        (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))""", cancellations)
+                        (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))
+                        ON CONFLICT DO NOTHING""", cancellations)
     conn.commit()
 
 
@@ -126,11 +127,19 @@ if __name__ == "__main__":
                           os.environ["DB_PASS"], os.environ["DB_USER"])
 
     switch_between_schemas("previous_day_data")
-    cancel_codes_df = pd.read_csv(CODES_CSV)
-    write_cancel_codes(conn, cancel_codes_df)
 
-    data = pd.read_csv("transformed_service_data.csv")
+    data = pd.read_csv("data/transformed_service_data.csv")
     insert_company_data(conn, data)
     insert_station_data(conn, data)
     insert_service_details_data(conn, data)
+    insert_delay_details(conn, data)
     insert_cancellations(conn, data)
+
+    switch_between_schemas("all_data")
+    insert_company_data(conn, data)
+    insert_station_data(conn, data)
+    insert_service_details_data(conn, data)
+    insert_delay_details(conn, data)
+    insert_cancellations(conn, data)
+
+    os.remove("data/transformed_service_data.csv")

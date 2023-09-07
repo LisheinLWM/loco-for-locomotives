@@ -6,7 +6,7 @@ CREATE DATABASE loco_db;
 CREATE SCHEMA previous_day_data;
 CREATE SCHEMA all_data;
 
-SET search_path TO previous_day_data;
+SET search_path TO all_data;
 
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS service_type (
 
 CREATE TABLE IF NOT EXISTS service_details (
     service_details_id INT GENERATED ALWAYS AS IDENTITY,
-    service_uid TEXT NOT NULL,
+    service_uid TEXT NOT NULL UNIQUE,
     company_id INT NOT NULL,
     service_type_id INT NOT NULL,
     origin_station_id INT NOT NULL,
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS service_details (
 
 CREATE TABLE IF NOT EXISTS delay_details (
     delay_details_id INT GENERATED ALWAYS AS IDENTITY,
-    service_details_id INT NOT NULL,
+    service_details_id INT NOT NULL UNIQUE,
     arrival_lateness SMALLINT,
     scheduled_arrival TIMESTAMP,
     PRIMARY KEY (delay_details_id),
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS delay_details (
 
 CREATE TABLE IF NOT EXISTS cancellation (
     cancellation_id INT GENERATED ALWAYS AS IDENTITY,
-    service_details_id INT NOT NULL,
+    service_details_id INT NOT NULL UNIQUE,
     cancelled_station_id INT NOT NULL,
     reached_station_id INT NOT NULL,
     cancel_code_id INT NOT NULL,
