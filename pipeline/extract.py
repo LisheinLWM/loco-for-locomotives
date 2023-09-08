@@ -23,7 +23,7 @@ def get_authentication(username: str, password: str) -> str:
     return authentication_string
 
 
-def get_service_data_by_station(station_crs: str, service_date: date, authentication) -> dict:
+def get_service_data_by_station(station_crs: str, service_date: date, authentication: str) -> dict:
     """Connects to the Realtime Trains API and returns a dictionary
     consisting of required data."""
 
@@ -41,7 +41,7 @@ def get_service_data_by_station(station_crs: str, service_date: date, authentica
     return response.json()
 
 
-def get_service_data_by_service(service_uid: str, service_date: date, authentication) -> dict:
+def get_service_data_by_service(service_uid: str, service_date: date, authentication: str) -> dict:
     """Connects to the Realtime Trains API and returns a dictionary
     consisting of required data."""
 
@@ -134,36 +134,23 @@ def obtain_relevant_data_by_service(station_crs: str, service_date: date, authen
     return list_of_services
 
 
-def convert_to_csv(list_of_services: list) -> None:
+def convert_to_csv(list_of_services: list, csv_filename: str = "data/service_data.csv") -> None:
     """Takes in a list of services and creates a csv file with a row for each service."""
 
     dataframe = pd.DataFrame(list_of_services)
-    csv_filename = "data/service_data.csv"
+
     dataframe.to_csv(csv_filename, index=False)
 
 
-def create_download_folders() -> None:
+def create_download_folders(folder_name: str = "data") -> None:
     """Creates a folder with the name "data" if it doesn't already exist"""
 
-    folder_exists = os.path.exists("data")
+    folder_exists = os.path.exists(folder_name)
     if not folder_exists:
-        os.makedirs("data")
+        os.makedirs(folder_name)
 
 
-def run_extract(authentication_realtime):
-
-    stations = {
-        "BRI": "Bristol Temple Meads",
-        "WAT": "London Waterloo",
-        "BHM": "Birmingham New Street",
-        "NCL": "Newcastle",
-        "YRK": "York",
-        "MAN": "Manchester Piccadilly",
-        "LIV": "Liverpool Lime Street",
-        "LDS": "Leeds",
-        "PAD": "London Paddington",
-        "SHF": "Sheffield"
-    }
+def run_extract(authentication_realtime: str, stations: dict):
 
     yesterday = datetime.now()-timedelta(days=1)
     yesterday_date = yesterday.strftime("%Y/%m/%d")
@@ -195,4 +182,17 @@ if __name__ == "__main__":  # pragma: no cover
     authentication_realtime = get_authentication(
         username_realtime, password_realtime)
 
-    run_extract(authentication_realtime)
+    stations = {
+        "BRI": "Bristol Temple Meads",
+        "WAT": "London Waterloo",
+        "BHM": "Birmingham New Street",
+        "NCL": "Newcastle",
+        "YRK": "York",
+        "MAN": "Manchester Piccadilly",
+        "LIV": "Liverpool Lime Street",
+        "LDS": "Leeds",
+        "PAD": "London Paddington",
+        "SHF": "Sheffield"
+    }
+
+    run_extract(authentication_realtime, stations)
