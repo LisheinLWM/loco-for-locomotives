@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS incident (
     link TEXT NOT NULL,
     summary TEXT NOT NULL,
     priority_id INT NOT NULL,
-    operator_id INT NOT NULL,
     is_planned BOOLEAN NOT NULL,
     creation_time TIMESTAMP NOT NULL,
     start_time TIMESTAMP NOT NULL,
