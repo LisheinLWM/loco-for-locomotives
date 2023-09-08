@@ -37,6 +37,7 @@ def get_service_data_by_station(station_crs: str, service_date: date, authentica
     except requests.exceptions.Timeout:
         return {
             "error": "Timeout: The request could not be completed.", "Station": station_crs}
+        return response
 
     return response.json()
 
@@ -55,6 +56,7 @@ def get_service_data_by_service(service_uid: str, service_date: date, authentica
     except requests.exceptions.Timeout:
         response = {
             "error": "Timeout: The request could not be completed.", "Service": service_uid}
+        return response
 
     return response.json()
 
@@ -153,16 +155,16 @@ def create_download_folders() -> None:
 def run_extract(authentication_realtime):
 
     stations = {
-    "BRI": "Bristol Temple Meads"
-    # "WAT": "London Waterloo",
-    # "BHM": "Birmingham New Street",
-    # "NCL": "Newcastle",
-    # "YRK": "York",
-    # "MAN": "Manchester Piccadilly",
-    # "LIV": "Liverpool Lime Street",
-    # "LDS": "Leeds",
-    # "PAD": "London Paddington",
-    # "SHF": "Sheffield"
+        "BRI": "Bristol Temple Meads",
+        "WAT": "London Waterloo",
+        "BHM": "Birmingham New Street",
+        "NCL": "Newcastle",
+        "YRK": "York",
+        "MAN": "Manchester Piccadilly",
+        "LIV": "Liverpool Lime Street",
+        "LDS": "Leeds",
+        "PAD": "London Paddington",
+        "SHF": "Sheffield"
     }
 
     yesterday = datetime.now()-timedelta(days=1)
