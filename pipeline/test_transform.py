@@ -13,6 +13,7 @@ from transform import (
     check_values_in_column_have_three_characters
 )
 
+
 def test_data_is_loaded():
 
     data = generate_test_dataframe_with_date_and_time_columns()
@@ -101,28 +102,26 @@ def test_create_timestamp_generates_correct_values():
     assert isinstance(datetime_value, pd.Timestamp)
 
 
-def test_cancel_code_list_generation():
+def test_cancel_code_list_generation(cancel_codes_df):
     """
     Tests whether generate_list_of_valid_cancel_codes()
     correctly processes html data and returns a list
     of codes
     """
-    cancel_codes_df = pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
-                                    'Cause': ['text1', 'text2', 'text3', 'text4'],
-                                    'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
-    cancel_codes_df.to_html('mock_cancel_codes.html', classes='wikitable', index=False, border=3, justify='center')
-    valid_code_list = generate_list_of_valid_cancel_codes('mock_cancel_codes.html')
+    cancel_codes_df.to_html('mock_cancel_codes.html',
+                            classes='wikitable', index=False, border=3, justify='center')
+    valid_code_list = generate_list_of_valid_cancel_codes(
+        'mock_cancel_codes.html')
     assert isinstance(valid_code_list, list)
     assert valid_code_list == ['AA', 'AC', 'AD', 'ZZ']
 
 
-def test_valid_and_invalid_cancel_codes_are_processed_correctly():
+def test_valid_and_invalid_cancel_codes_are_processed_correctly(cancel_codes_df):
 
-    cancel_codes_df = pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
-                                    'Cause': ['text1', 'text2', 'text3', 'text4'],
-                                    'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
-    cancel_codes_df.to_html('mock_cancel_codes.html', classes='wikitable', index=False, border=3, justify='center')
-    valid_code_list = generate_list_of_valid_cancel_codes('mock_cancel_codes.html')
+    cancel_codes_df.to_html('mock_cancel_codes.html',
+                            classes='wikitable', index=False, border=3, justify='center')
+    valid_code_list = generate_list_of_valid_cancel_codes(
+        'mock_cancel_codes.html')
     service_df = generate_test_dataframe_with_date_and_time_columns()
     service_df = determine_if_cancel_code_is_valid(service_df, valid_code_list)
     assert service_df['cancel_code'].tolist() == ["AA", None, "ZZ"]
@@ -138,10 +137,10 @@ def test_numbers_are_processed_correctly():
 def test_CRS_values_are_confirmed_to_be_three_characters():
 
     df_1 = generate_test_dataframe_with_date_and_time_columns()
-    df_1 = check_values_in_column_have_three_characters(df_1, "crs", drop_row=True)
+    df_1 = check_values_in_column_have_three_characters(
+        df_1, "crs", drop_row=True)
     assert df_1["crs"].tolist() == ["ABC"]
     df_2 = generate_test_dataframe_with_date_and_time_columns()
-    df_2 = check_values_in_column_have_three_characters(df_2, "crs", drop_row=False)
+    df_2 = check_values_in_column_have_three_characters(
+        df_2, "crs", drop_row=False)
     assert df_1["crs"].tolist() == ["ABC", None, None]
-
-

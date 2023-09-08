@@ -148,7 +148,7 @@ def run_load(conn):
     print(f"Loading completed in: {elapsed_time:.2f} seconds.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
 
     load_dotenv()
     conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
