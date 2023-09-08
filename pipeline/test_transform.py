@@ -15,7 +15,7 @@ from transform import (
 
 
 def test_data_is_loaded():
-    '''Tests that the data is loaded correctly'''
+    """Tests that the data is loaded correctly"""
     data = generate_test_dataframe_with_date_and_time_columns()
     data.to_csv('test_data.csv', index=False)
     result_1 = load_data('test_data.csv')
@@ -128,14 +128,14 @@ def test_valid_and_invalid_cancel_codes_are_processed_correctly(cancel_codes_df)
 
 
 def test_numbers_are_processed_correctly():
-    '''Tests that numbers are processed correctly'''
+    """Tests that numbers are processed correctly"""
     df = generate_test_dataframe_with_date_and_time_columns()
     df = replace_non_integers_with_none(df, "numbers")
     assert df["numbers"].tolist() == [12.0, -5.0, None]
 
 
 def test_CRS_values_are_confirmed_to_be_three_characters():
-    '''Tests that CRS values are 3 characters exactly'''
+    """Tests that CRS values are 3 characters exactly"""
     df_1 = generate_test_dataframe_with_date_and_time_columns()
     df_1 = check_values_in_column_have_three_characters(
         df_1, "crs", drop_row=True)
