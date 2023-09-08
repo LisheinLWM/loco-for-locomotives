@@ -4,6 +4,7 @@ SET search_path TO incident_data;
 
 CREATE TABLE IF NOT EXISTS operator (
     operator_id INT GENERATED ALWAYS AS IDENTITY,
+    operator_code TEXT NOT NULL,
     operator_name TEXT NOT NULL UNIQUE,
     PRIMARY KEY (operator_id)
 );
