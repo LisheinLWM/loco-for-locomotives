@@ -21,7 +21,6 @@ if __name__ == "__main__":
     input_csv_path = "data/service_data.csv"
     run_transform(input_csv_path)
 
-    load_dotenv()
     conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
                           os.environ["DB_PASS"], os.environ["DB_USER"])
     run_load(conn)
