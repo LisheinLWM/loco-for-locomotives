@@ -1,4 +1,5 @@
 from pytest import fixture
+import pandas as pd
 
 
 @fixture
@@ -118,3 +119,10 @@ def darton_service_info():
             }
         ]
     }
+
+
+@fixture
+def cancel_codes_df():
+    return pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
+                         'Cause': ['text1', 'text2', 'text3', 'text4'],
+                         'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
