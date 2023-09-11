@@ -165,9 +165,8 @@ def run_extract(authentication_realtime):
         "SHF": "Sheffield"
     }
 
-    # yesterday = datetime.now()-timedelta(days=1)
-    # yesterday_date = yesterday.strftime("%Y/%m/%d")
-    yesterday_date = '2023/09/05'
+    yesterday = datetime.now()-timedelta(days=1)
+    yesterday_date = yesterday.strftime("%Y/%m/%d")
 
     start_time = time.time()
     print("Extracting...")
