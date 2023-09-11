@@ -1,3 +1,5 @@
+"""insert docstring here"""
+
 #
 # National Rail Open Data client demonstrator
 # Copyright (C)2019-2022 OpenTrainTimes Ltd.
@@ -16,20 +18,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-import stomp
-import zlib
-import io
 import time
 import socket
 import logging
 import xml.etree.ElementTree as ET
 import pandas as pd
-from pandas import DataFrame
-from datetime import datetime
+import stomp
 from dotenv import dotenv_values
 from extract_incident_data import (
     extract_and_transform_incident_data,
-    convert_timestamp,
     flatten_incident_data
 )
 
@@ -42,7 +39,7 @@ except ModuleNotFoundError:
     logging.error(
         "Class files not found - please configure the client following steps in README.md!")
 
-config=dotenv_values()
+config = dotenv_values()
 
 USERNAME = config["USERNAME"]
 PASSWORD = config["PASSWORD"]
@@ -63,10 +60,12 @@ namespaces = {
 
 if USERNAME == '':
     logging.error(
-        "Username not set - please configure your username and password in opendata-nationalrail-client.py!")
+        "Username not set - please configure your username\
+              and password in opendata-nationalrail-client.py!")
 
 
 def connect_and_subscribe(connection):
+    """insert docstring here"""
     if stomp.__version__[0] < 5:
         connection.start()
 
@@ -113,7 +112,6 @@ class StompClient(stomp.ConnectionListener):
             msg_df = pd.DataFrame(flattened_msg)
             print(message_data)
             print(msg_df)
-            input()
         except Exception as e:
             logging.error(str(e))
 
