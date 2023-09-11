@@ -112,7 +112,8 @@ def relevant_fields(journey: dict, service: dict) -> dict:
     return relevant_data
 
 
-def obtain_relevant_data_by_service(station_crs: str, service_date: date, authentication: str) -> list:
+def obtain_relevant_data_by_service(station_crs: str, service_date: date,
+                                    authentication: str) -> list:
     """Returns a list of all the services for a single station on a given date."""
 
     list_of_services = []
@@ -151,6 +152,10 @@ def create_download_folders() -> None:
 
 
 def run_extract(authentication_realtime):
+    """
+    This function is used to run the whole extract script
+    so that we can pass it on to other files
+    """
 
     stations = {
         "BRI": "Bristol Temple Meads",

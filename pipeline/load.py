@@ -94,7 +94,10 @@ def insert_service_details_data(conn: connection, data: pd.DataFrame) -> None:
 
 
 def insert_delay_details(conn: connection, data: pd.DataFrame) -> None:
-    """Inserts all services where the arrival lateness is great that 0 into the delay details table"""
+    """
+    Inserts all services where the arrival lateness
+    is great that 0 into the delay details table
+    """
 
     details = data[["service_uid", "arrival_lateness",
                     "scheduled_arrival_datetime"]]
@@ -108,6 +111,7 @@ def insert_delay_details(conn: connection, data: pd.DataFrame) -> None:
 
 
 def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
+    """Inserts all cancellations into the database"""
 
     details = data[["service_uid", "cancellation_station_crs",
                    "destination_reached_crs", "cancel_code"]]
@@ -115,13 +119,15 @@ def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
 
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO cancellation (service_details_id, cancelled_station_id, reached_station_id, cancel_code_id)
-                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s), (SELECT station_id FROM station WHERE crs = %s),
+                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s),
+                        (SELECT station_id FROM station WHERE crs = %s),
                         (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))
                         ON CONFLICT DO NOTHING""", cancellations)
     conn.commit()
 
 
 def run_load(conn):
+    """Runs the load script in this function so that it can be used in the pipeline file"""
 
     print("Loading data into database.")
     start_time = time.time()
@@ -148,10 +154,10 @@ def run_load(conn):
     print(f"Loading completed in: {elapsed_time:.2f} seconds.")
 
 
-if __name__ == "__main__": # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
 
     load_dotenv()
-    conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
-                          os.environ["DB_PASS"], os.environ["DB_USER"])
+    connection = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
+                                os.environ["DB_PASS"], os.environ["DB_USER"])
 
-    run_load(conn)
+    run_load(connection)
