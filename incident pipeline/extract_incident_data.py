@@ -12,7 +12,10 @@ namespaces = {
 
 
 def convert_timestamp(timestamp_str: str) -> datetime:
-
+    """
+    Takes a timezone-inclusive timestamp
+    and formats it as YYYY-MM-DD HH:MM:SS
+    """
     timestamp = datetime.fromisoformat(timestamp_str)
     formatted_timestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -29,7 +32,10 @@ def parse_xml_string(xml_data: str) -> Element:
 
 
 def extract_operators_from_element(root: Element, namespaces: dict) -> list:
-
+    """
+    Takes an XML element and returns a list
+    with details for each 'operator' found
+    """
     operators = root.findall(".//ns3:Operators", namespaces)
     operators_info = []
 
@@ -44,7 +50,10 @@ def extract_operators_from_element(root: Element, namespaces: dict) -> list:
 
 
 def extract_incident_details(root: Element, namespaces: dict) -> dict:
-
+    """
+    Takes an XML element and returns a
+    dictionary containing incident details
+    """
     incident_data = {
         "creation_time": root.find('.//ns3:CreationTime', namespaces).text,
         "incident_number": root.find('.//ns3:IncidentNumber', namespaces).text,
@@ -63,7 +72,10 @@ def extract_incident_details(root: Element, namespaces: dict) -> dict:
 
 
 def transform_incident_data(incident_data: dict) -> dict:
-
+    """
+    Processes the incident data dictionary,
+    ensuring correct formats and data types
+    """
     for timestamp_key in ["creation_time", "start_time", "end_time"]:
         try:
             incident_data[timestamp_key] = convert_timestamp(
@@ -95,7 +107,11 @@ def transform_incident_data(incident_data: dict) -> dict:
 
 
 def extract_and_transform_incident_data(input_string: str, namespaces: dict):
-
+    """
+    Calls the functions which parse, extract,
+    and transform an incoming incident message,
+    returning the transformed message
+    """
     root = parse_xml_string(input_string)
     incident_data = extract_incident_details(root, namespaces)
     transformed_incident_data = transform_incident_data(incident_data)
@@ -104,7 +120,11 @@ def extract_and_transform_incident_data(input_string: str, namespaces: dict):
 
 
 def flatten_incident_data(incident_data: dict) -> DataFrame:
-
+    """
+    Flattens the incident data dictionary into
+    a list of dictionaries, each one containing
+    only one operator and one affected route
+    """
     flattened_data = []
 
     for operator in incident_data['operators_affected']:

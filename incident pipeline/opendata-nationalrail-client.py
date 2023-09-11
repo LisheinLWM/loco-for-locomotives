@@ -26,6 +26,7 @@ import xml.etree.ElementTree as ET
 import pandas as pd
 from pandas import DataFrame
 from datetime import datetime
+from dotenv import dotenv_values
 from extract_incident_data import (
     extract_and_transform_incident_data,
     convert_timestamp,
@@ -41,10 +42,12 @@ except ModuleNotFoundError:
     logging.error(
         "Class files not found - please configure the client following steps in README.md!")
 
-USERNAME = 'KBb3ad148f-a9ed-46ca-a37e-b7f6a65aba76'
-PASSWORD = '8b998c5a-d74d-4bd5-a6a0-5bfb498a9b08'
-HOSTNAME = 'kb-dist-261e4f.nationalrail.co.uk'
-HOSTPORT = 61613
+config=dotenv_values()
+
+USERNAME = config["USERNAME"]
+PASSWORD = config["PASSWORD"]
+HOSTNAME = config["HOSTNAME"]
+HOSTPORT = config["HOSTPORT"]
 # Always prefixed by /topic/ (it's not a queue, it's a topic)
 TOPIC = '/topic/kb.incidents'
 

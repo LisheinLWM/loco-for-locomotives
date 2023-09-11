@@ -11,7 +11,14 @@ from pandas import DataFrame
 
 
 def get_operator_info_df():
-
+    """
+    Creates a DataFrame of National Rail
+    operators, with columns that include
+    passenger satisfaction and operator
+    code. Some operators are manually inserted
+    into the DataFrame, to account for issues 
+    with the Wikipedia table
+    """
     df = pd.read_html("https://en.wikipedia.org/wiki/List_of_companies_operating_trains_in_the_United_Kingdom",
                       flavor="bs4", attrs={"class": "wikitable"})[0]
     df["Passenger satisfaction[1]"] = df["Passenger satisfaction[1]"].apply(
@@ -33,7 +40,9 @@ def get_operator_info_df():
 
 
 def seed_operator_table(conn: connection, operator_info: DataFrame):
-
+    """
+    Adds data to the 'operator' table
+    """
     operator_info_values = operator_info[[
         'Operator', 'Code', 'Passenger satisfaction (%)']].values.tolist()
 
