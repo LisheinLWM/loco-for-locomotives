@@ -20,7 +20,7 @@ def load_data(csv_path: str) -> DataFrame:
         return None
 
 
-def hhmmss_to_timestamp(time_string: str): #pargma: no cover
+def hhmmss_to_timestamp(time_string: str):  # pargma: no cover
     """
     Takes a 'time' string in the form
     'HHMMSS' and returns a valid timestamp
@@ -78,7 +78,8 @@ def replace_non_integers_with_none(df: DataFrame, column_name: str) -> DataFrame
     return df
 
 
-def check_values_in_column_have_three_characters(df: DataFrame, column_name: str, drop_row: bool) -> DataFrame:
+def check_values_in_column_have_three_characters(df: DataFrame, column_name: str,
+                                                 drop_row: bool) -> DataFrame:
     """
     Checks that values in the specified column
     have a length of 3 characters. Optionally drops
@@ -114,12 +115,17 @@ def determine_if_cancel_code_is_valid(service_df: DataFrame, valid_codes_list: l
     replaced with None
     """
     service_df["cancel_code"] = service_df["cancel_code"].apply(lambda x: str(x).strip().upper()
-                                                                if str(x).strip().upper() in valid_codes_list
+                                                                if str(x).strip().upper()
+                                                                in valid_codes_list
                                                                 else None)
     return service_df
 
 
 def run_transform(input_csv_path):
+    """
+    This function runs the whole script as wanted and 
+    allows us to run the transform script in the pipeline
+    """
 
     service_df = load_data(input_csv_path)
 
@@ -132,7 +138,7 @@ def run_transform(input_csv_path):
                                                      "origin_run_datetime",
                                                      "origin_run_date",
                                                      "origin_run_time")
-    
+
     service_df = service_df.drop(columns=["scheduled_arrival_date",
                                           "scheduled_arrival_time",
                                           "origin_run_date",
@@ -160,6 +166,7 @@ def run_transform(input_csv_path):
     os.remove("data/service_data.csv")
 
     print("Transform complete")
+
 
 if __name__ == "__main__":
 
