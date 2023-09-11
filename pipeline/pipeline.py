@@ -1,3 +1,5 @@
+"""Pipeline script to run everything necessary in the same place"""
+
 import os
 from os import environ
 from dotenv import load_dotenv
