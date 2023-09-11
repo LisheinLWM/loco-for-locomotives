@@ -40,9 +40,7 @@ CSV_COLUMNS = [
 
 
 def get_db_connection():
-    """
-    Establishes a connection with the PostgreSQL database.
-    """
+    """Establishes a connection with the PostgreSQL database."""
     try:
         conn = connect(
             user=environ.get("DATABASE_USERNAME"),
@@ -58,9 +56,7 @@ def get_db_connection():
 
 
 def get_live_database(conn: connection) -> pd.DataFrame:
-    """
-    Retrieve plant data from the database and return as a DataFrame.
-    """
+    """Retrieve plant data from the database and return as a DataFrame."""
 
     query = """
     SET search_path TO previous_day_data;
@@ -107,18 +103,15 @@ LEFT JOIN cancel_code cc ON cn.cancel_code_id = cc.cancel_code_id;
 
 
 def dashboard_header() -> None:
-    """
-    Creates a header for the dashboard and title on tab.
-    """
+    """Creates a header for the dashboard and title on tab."""
 
     st.title("LOCO_FOR_LOCOMOTIVES")
     st.markdown("An app for analysing your train services")
 
 
 def plot_average_delays_by_company(data_df: pd.DataFrame) -> None:
-    """
-    Create a bar chart showing the average delays for each company.
-    """
+    """Create a bar chart showing the average delays for each company."""
+
     st.title("Average_delays_by_company")
 
     average_delays = data_df.groupby('company_name')[
@@ -142,9 +135,8 @@ def plot_average_delays_by_company(data_df: pd.DataFrame) -> None:
 
 
 def plot_average_delays_by_station(data_df: pd.DataFrame, station) -> None:
-    """
-    Create a bar chart showing the average delays for each station.
-    """
+    """Create a bar chart showing the average delays for each station."""
+
     st.title("Average_delays_by_station (TOP 20)")
 
     max_stations = 20
@@ -180,6 +172,170 @@ def plot_average_delays_by_station(data_df: pd.DataFrame, station) -> None:
                     textcoords='offset points')
     st.pyplot(plt)
 
+def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> None:
+    """
+    Create a bar chart showing the number of cancellations per station.
+    """
+    st.title("Number of Cancellations by Station")
+
+    max_stations = 20
+
+    if len(selected_station) > max_stations:
+        st.error(f"You have reached the maximum limit of {max_stations} stations in display. Please remove a station to add more.")
+        selected_station = selected_station[:max_stations]  # Truncate the list
+
+    if len(selected_station) != 0:
+        data_df = data_df[data_df['origin_station_name'].isin(selected_station)]
+
+    # Calculate the number of cancellations for each station
+    cancellations_per_station = data_df[data_df['cancellation_id'].notnull()].groupby('origin_station_name')['cancellation_id'].count().reset_index()
+    cancellations_per_station = cancellations_per_station.rename(columns={'cancellation_id': 'cancellation_count'})
+
+    # Sort the stations by cancellation count in descending order and select the top 20 stations
+    cancellations_per_station = cancellations_per_station.sort_values(by='cancellation_count', ascending=False).head(20)
+
+    plt.figure(figsize=(15, 6))
+    ax = sns.barplot(x='origin_station_name', y='cancellation_count', data=cancellations_per_station)
+    plt.xlabel('Station Name')
+    plt.ylabel('Number of Cancellations')
+    plt.title('Number of Cancellations by Station')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Add values as text labels on each bar
+    for p in ax.patches:
+        ax.annotate(f"{int(p.get_height())}", (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha='center', va='center', fontsize=10, color='black', xytext=(0, 5),
+                    textcoords='offset points')
+
+    st.pyplot(plt)
+
+
+import streamlit as st
+
+def plot_bus_replacements_per_station(data_df: pd.DataFrame, selected_station) -> None:
+    """
+    Create a bar chart showing the number of bus replacements per station.
+    """
+    st.title("Number of Bus Replacements by Station")
+
+    max_stations = 20
+
+    if len(selected_station) > max_stations:
+        st.error(f"You have reached the maximum limit of {max_stations} stations in display. Please remove a station to add more.")
+        selected_station = selected_station[:max_stations]  # Truncate the list
+
+    if len(selected_station) != 0:
+        data_df = data_df[data_df['origin_station_name'].isin(selected_station)]
+
+    # Calculate the number of bus replacements for each station
+    bus_replacements_per_station = data_df[data_df["service_type_name"] == "bus"].groupby('origin_station_name').size().reset_index(name='bus_replacement_count')
+    bus_replacements_per_station = bus_replacements_per_station.rename(columns={"service_type_name": 'bus_replacement_count'})
+
+    # Sort the stations by bus replacement count in descending order and select the top 20 stations
+    bus_replacements_per_station = bus_replacements_per_station.sort_values(by='bus_replacement_count', ascending=False).head(20)
+
+    plt.figure(figsize=(15, 6))
+    ax = sns.barplot(x='origin_station_name', y='bus_replacement_count', data=bus_replacements_per_station)
+    plt.xlabel('Station Name')
+    plt.ylabel('Number of Bus Replacements')
+    plt.title('Number of Bus Replacements by Station')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Add values as text labels on each bar
+    for p in ax.patches:
+        ax.annotate(f"{int(p.get_height())}", (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha='center', va='center', fontsize=10, color='black', xytext=(0, 5),
+                    textcoords='offset points')
+
+    st.pyplot(plt)
+
+
+def plot_average_delays_proportionate_to_services(data_df: pd.DataFrame, selected_station) -> None:
+    """
+    Create a stacked bar chart showing average delays proportionate 
+    to the number of services for each station.
+    """
+    st.title("Average Delays Proportionate to Services by Station (TOP 20)")
+
+    max_stations = 20
+
+    if len(selected_station) > max_stations:
+        st.error(f"You have reached the maximum limit of {max_stations} stations in display. Please remove a station to add more.")
+        selected_station = selected_station[:max_stations]  # Truncate the list
+
+    if len(selected_station) != 0:
+        data_df = data_df[data_df['origin_station_name'].isin(selected_station)]
+
+    # Calculate the average delay and the count of services for each station
+    station_summary = data_df.groupby('origin_station_name').agg({'arrival_lateness': 'mean', 'origin_station_id': 'count'}).reset_index()
+    station_summary = station_summary.rename(columns={'arrival_lateness': 'average_delay', 'origin_station_id': 'service_count'})
+
+    # Sort the stations by average delay in descending order and select the top 20 stations
+    station_summary = station_summary.sort_values(by='average_delay', ascending=False).head(20)
+
+    plt.figure(figsize=(15, 6))
+    ax = sns.barplot(x='origin_station_name', y='average_delay', data=station_summary)
+    plt.xlabel('Station Name')
+    plt.ylabel('Average Delay')
+    plt.title('Average Delays Proportionate to Services by Station')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Add values as text labels on each bar with 2 decimal places
+    for p in ax.patches:
+        ax.annotate(f"{p.get_height():.2f} min", (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha='center', va='center', fontsize=10, color='black', xytext=(0, 5),
+                    textcoords='offset points')
+    
+    # Add the proportion of services as a secondary axis
+    ax2 = ax.twinx()
+    ax2.set_ylabel('Proportion of Services')
+    ax2.bar(station_summary['origin_station_name'], station_summary['service_count'] / station_summary['service_count'].sum(), alpha=0.5, color='green')
+
+    st.pyplot(plt)
+
+
+def plot_percentage_of_services_reaching_final_destination(data_df: pd.DataFrame, selected_station) -> None:
+    """
+    Create a bar chart showing the percentage of services that reach their planned final destination per station.
+    """
+    st.title("Percentage of Services Reaching Final Destination by Station")
+
+    max_stations = 20
+
+    if len(selected_station) > max_stations:
+        st.error(f"You have reached the maximum limit of {max_stations} stations in display. Please remove a station to add more.")
+        selected_station = selected_station[:max_stations]  # Truncate the list
+
+    if len(selected_station) != 0:
+        data_df = data_df[data_df['origin_station_name'].isin(selected_station)]
+
+    # Calculate the percentage of services reaching their planned final destination for each station
+    services_reaching_final_destination = data_df[data_df['destination_station_id'] == data_df['reached_station_id']]
+    station_summary = services_reaching_final_destination.groupby('origin_station_name').size().reset_index(name='reached_destination_count')
+    total_services = data_df.groupby('origin_station_name').size().reset_index(name='total_services')
+    station_summary = station_summary.merge(total_services, on='origin_station_name', how='outer')
+    station_summary['percentage_reached_destination'] = (station_summary['reached_destination_count'] / station_summary['total_services']) * 100
+    station_summary = station_summary.sort_values(by='percentage_reached_destination', ascending=False).head(20)
+
+    plt.figure(figsize=(15, 6))
+    ax = sns.barplot(x='origin_station_name', y='percentage_reached_destination', data=station_summary)
+    plt.xlabel('Station Name')
+    plt.ylabel('Percentage of Services Reaching Final Destination')
+    plt.title('Percentage of Services Reaching Final Destination by Station')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+
+    # Add percentage values as text labels on each bar with 2 decimal places
+    for p in ax.patches:
+        ax.annotate(f"{p.get_height():.2f}%", (p.get_x() + p.get_width() / 2., p.get_height()),
+                    ha='center', va='center', fontsize=10, color='black', xytext=(0, 5),
+                    textcoords='offset points')
+
+    st.pyplot(plt)
+
 
 if __name__ == "__main__":
     st.set_page_config(
@@ -193,4 +349,9 @@ if __name__ == "__main__":
         "Station", options=database_df["origin_station_name"].unique())
 
     plot_average_delays_by_station(database_df, selected_station)
+    plot_average_delays_proportionate_to_services(database_df, selected_station)
+    plot_cancellations_per_station(database_df, selected_station)
+    plot_bus_replacements_per_station(database_df, selected_station)
+    plot_percentage_of_services_reaching_final_destination(database_df, selected_station)
+
     plot_average_delays_by_company(database_df)
