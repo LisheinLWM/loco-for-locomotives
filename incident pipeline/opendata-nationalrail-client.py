@@ -29,15 +29,11 @@ from extract_incident_data import (
     extract_and_transform_incident_data,
     flatten_incident_data
 )
+from load_incident_data import load_all_incidents
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)s\t%(message)s', level=logging.INFO)
 
-try:
-    import PPv16
-except ModuleNotFoundError:
-    logging.error(
-        "Class files not found - please configure the client following steps in README.md!")
 
 config = dotenv_values()
 
@@ -105,13 +101,12 @@ class StompClient(stomp.ConnectionListener):
 
     def on_message(self, frame):
         try:
-            # print(frame.body.decode())
             message_data = extract_and_transform_incident_data(
                 frame.body.decode(), namespaces)
             flattened_msg = flatten_incident_data(message_data)
             msg_df = pd.DataFrame(flattened_msg)
-            print(message_data)
-            print(msg_df)
+            load_all_incidents(msg_df)
+            print("loaded")
         except Exception as e:
             logging.error(str(e))
 

@@ -4,6 +4,7 @@ Streamlit dashboard application code.
 Module contains code for connecting to postgres database (RDS)
 and using that data to create charts for data analysis.
 """
+from datetime import datetime, timedelta
 import sys
 from os import environ
 import pandas as pd
@@ -59,11 +60,13 @@ def get_db_connection():
 
 def get_live_database(conn: connection) -> pd.DataFrame:
     """
-    Retrieve plant data from the database and return as a DataFrame.
+    Retrieve 24hr data from the database and return as a DataFrame.
     """
+    yesterday = datetime.datetime.now() - timedelta(days=1)
+    yesterday_date = yesterday.strftime("%Y-%m-%d")
 
     query = """
-    SET search_path TO previous_day_data;
+    SET search_path TO service_data;
     SELECT 
         cc.cancel_code_id,
         cc.code AS cancel_code,
@@ -86,18 +89,19 @@ def get_live_database(conn: connection) -> pd.DataFrame:
         cn.cancellation_id,
         cn.cancelled_station_id,
         cn.reached_station_id
-FROM service_details sd
-LEFT JOIN company c ON sd.company_id = c.company_id
-LEFT JOIN service_type st ON sd.service_type_id = st.service_type_id
-LEFT JOIN station s ON sd.origin_station_id = s.station_id
-LEFT JOIN station s2 ON sd.destination_station_id = s2.station_id
-LEFT JOIN delay_details dd ON sd.service_details_id = dd.service_details_id
-LEFT JOIN cancellation cn ON sd.service_details_id = cn.service_details_id
-LEFT JOIN cancel_code cc ON cn.cancel_code_id = cc.cancel_code_id;
-"""
+        FROM service_details sd
+        LEFT JOIN company c ON sd.company_id = c.company_id
+        LEFT JOIN service_type st ON sd.service_type_id = st.service_type_id
+        LEFT JOIN station s ON sd.origin_station_id = s.station_id
+        LEFT JOIN station s2 ON sd.destination_station_id = s2.station_id
+        LEFT JOIN delay_details dd ON sd.service_details_id = dd.service_details_id
+        LEFT JOIN cancellation cn ON sd.service_details_id = cn.service_details_id
+        LEFT JOIN cancel_code cc ON cn.cancel_code_id = cc.cancel_code_id
+        WHERE DATE(sd.run_date) = %s;
+        """
 
     with conn.cursor() as cur:
-        cur.execute(query)
+        cur.execute(query, (yesterday_date,))
         data = cur.fetchall()
 
     data_df = pd.DataFrame(data, columns=CSV_COLUMNS)
