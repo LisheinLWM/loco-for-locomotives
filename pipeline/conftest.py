@@ -4,6 +4,7 @@ import pandas as pd
 
 @fixture
 def darton_service():
+    """A fixture to return data on the darton journey data"""
     return {
         "locationDetail": {
             "realtimeActivated": True,
@@ -49,6 +50,10 @@ def darton_service():
 
 @fixture
 def darton_service_info():
+    """
+    A fixture to show the service info for Darton
+    as an example of a service
+    """
     return {
         "serviceUid": "P44650",
         "runDate": "2023-09-06",
@@ -123,6 +128,24 @@ def darton_service_info():
 
 @fixture
 def cancel_codes_df():
+    """
+    A fixture that returns a dataframe providing
+    a fake cancel codes dataframe
+    """
     return pd.DataFrame({'Code': ['AA', 'AC', 'AD', 'ZZ'],
                          'Cause': ['text1', 'text2', 'text3', 'text4'],
                          'Abbreviation': ['ACCEPTANCE', 'TRAIN PREP', 'WTG STAFF', 'SYS LIR']})
+
+
+@fixture
+def generated_df():
+    """
+    Generates a DataFrame with a column of
+    date strings and a column of time strings
+    """
+    data = {"date_column": ["2023-09-05", "2023-09-06", "2023-09-08"],
+            "time_column": ["123045", "081530", "153024"],
+            "cancel_code": ["AA", "tabbycat", "ZZ"],
+            "numbers": [12, -5, "cancelled at origin"],
+            "crs": ["ABC", 0, "FUDGE"]}
+    return pd.DataFrame(data)
