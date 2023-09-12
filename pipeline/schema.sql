@@ -3,10 +3,9 @@ CREATE DATABASE loco_db;
 
 \c loco_db;
 
-CREATE SCHEMA previous_day_data;
-CREATE SCHEMA all_data;
+CREATE SCHEMA service_data;
 
-SET search_path TO all_data;
+SET search_path TO service_data;
 
 CREATE TABLE IF NOT EXISTS cancel_code (
     cancel_code_id INT GENERATED ALWAYS AS IDENTITY,

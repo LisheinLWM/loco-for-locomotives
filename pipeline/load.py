@@ -131,16 +131,9 @@ def run_load(conn):
 
     print("Loading data into database.")
     start_time = time.time()
-    switch_between_schemas(conn, "previous_day_data")
+    switch_between_schemas(conn, "service_data")
 
     data = pd.read_csv("data/transformed_service_data.csv")
-    insert_company_data(conn, data)
-    insert_station_data(conn, data)
-    insert_service_details_data(conn, data)
-    insert_delay_details(conn, data)
-    insert_cancellations(conn, data)
-
-    switch_between_schemas(conn, "all_data")
     insert_company_data(conn, data)
     insert_station_data(conn, data)
     insert_service_details_data(conn, data)
