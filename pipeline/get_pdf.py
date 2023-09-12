@@ -105,11 +105,10 @@ def export_to_html(data, average_delays):
     </head>
     <body>
         <h1>Report Data</h1>
-        <p> {data}</p>
+        <p> {data.to_html()}</p>
         
-        <h2>Mean and Median Per Truck</h2>
-        <ul> {average_delays}
-        </ul>
+        <h2>Average Delays per Company</h2>
+        {average_delays.to_html()}
     </body>
     </html>
     """
@@ -132,6 +131,7 @@ def convert_html_to_pdf(source_html, output_filename):
 
 def create_report(data):
     average = get_average_delays(data)
+
     html_data = export_to_html(data, average)
 
     convert_html_to_pdf(html_data, "test.pdf")
