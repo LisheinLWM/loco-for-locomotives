@@ -95,7 +95,7 @@ def get_data_from_database(conn: connection):
     return data_df
 
 
-def export_to_html(data, average_delays):
+def export_to_html(data, average_delays, total_services):
     """ Create the HTML string and export to html file."""
     html_content = f"""
     <!DOCTYPE html>
@@ -104,11 +104,17 @@ def export_to_html(data, average_delays):
         <title>Report Data</title>
     </head>
     <body>
+        <h1>
+        Total services
+        </h1>
+        <p> {total_services.to_html(index=False)} </p>
+        
         <h1>Report Data</h1>
-        <p> {data.to_html()}</p>
+        <p> {data.to_html(index=False)}</p>
+        
         
         <h2>Average Delays per Company</h2>
-        {average_delays.to_html()}
+        {average_delays.to_html(index=False)}
     </body>
     </html>
     """
@@ -131,8 +137,9 @@ def convert_html_to_pdf(source_html, output_filename):
 
 def create_report(data):
     average = get_average_delays(data)
-
-    html_data = export_to_html(data, average)
+    total_services = data.groupby(
+        'origin_station_name').size().reset_index(name='total_services')
+    html_data = export_to_html(data, average, total_services)
 
     convert_html_to_pdf(html_data, "test.pdf")
 
