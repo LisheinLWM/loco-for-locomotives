@@ -6,7 +6,6 @@ import os
 from os import environ
 import time
 
-
 import requests
 from dotenv import load_dotenv
 import pandas as pd

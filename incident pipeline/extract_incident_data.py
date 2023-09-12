@@ -78,7 +78,7 @@ def extract_incident_details(root: Element, namespaces: dict) -> dict:
         "operators_affected": extract_operators_from_element(root, namespaces),
         "routes_affected": routes.text if routes is not None else None
     }
-    print(incident_data)
+
     return incident_data
 
 

@@ -18,46 +18,23 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
+import os
 import time
 import socket
 import logging
 import xml.etree.ElementTree as ET
+
+from boto3 import client
 import pandas as pd
 import stomp
-from dotenv import dotenv_values
+from dotenv import load_dotenv
+
 from extract_incident_data import (
     extract_and_transform_incident_data,
     flatten_incident_data
 )
 from load_incident_data import load_all_incidents
-
-logging.basicConfig(
-    format='%(asctime)s %(levelname)s\t%(message)s', level=logging.INFO)
-
-
-config = dotenv_values()
-
-USERNAME = config["USERNAME"]
-PASSWORD = config["PASSWORD"]
-HOSTNAME = config["HOSTNAME"]
-HOSTPORT = config["HOSTPORT"]
-# Always prefixed by /topic/ (it's not a queue, it's a topic)
-TOPIC = '/topic/kb.incidents'
-
-CLIENT_ID = socket.getfqdn()
-HEARTBEAT_INTERVAL_MS = 30000
-HEARTBEAT_RESPONSE_TIMEOUT = 25000
-RECONNECT_DELAY_SECS = 15
-
-namespaces = {
-    'ns2': 'http://nationalrail.co.uk/xml/common',
-    'ns3': 'http://nationalrail.co.uk/xml/incident'
-}
-
-if USERNAME == '':
-    logging.error(
-        "Username not set - please configure your username\
-              and password in opendata-nationalrail-client.py!")
+from messages import send_incident_notification
 
 
 def connect_and_subscribe(connection):
@@ -103,6 +80,7 @@ class StompClient(stomp.ConnectionListener):
         try:
             message_data = extract_and_transform_incident_data(
                 frame.body.decode(), namespaces)
+            send_incident_notification(message_data, sns)
             flattened_msg = flatten_incident_data(message_data)
             msg_df = pd.DataFrame(flattened_msg)
             load_all_incidents(msg_df)
@@ -111,16 +89,53 @@ class StompClient(stomp.ConnectionListener):
             logging.error(str(e))
 
 
-conn = stomp.Connection12([(HOSTNAME, HOSTPORT)],
-                          auto_decode=False,
-                          )
+if __name__ == "__main__":
 
-client = StompClient()
-client.conn = conn
-conn.set_listener('', client)
-connect_and_subscribe(conn)
+    logging.basicConfig(
+        format='%(asctime)s %(levelname)s\t%(message)s', level=logging.INFO)
 
-while True:
-    time.sleep(1)
+    load_dotenv()
 
-conn.disconnect()
+    ACCESS_KEY_ID = os.environ["ACCESS_KEY_ID"]
+    SECRET_ACCESS_KEY = os.environ["SECRET_ACCESS_KEY"]
+
+    s3 = client("s3", aws_access_key_id=os.environ["ACCESS_KEY_ID"],
+                aws_secret_access_key=os.environ["SECRET_ACCESS_KEY"])
+
+    sns = client("sns")
+
+    USERNAME = os.environ["USERNAME"]
+    PASSWORD = os.environ["PASSWORD"]
+    HOSTNAME = os.environ["HOSTNAME"]
+    HOSTPORT = os.environ["HOSTPORT"]
+
+    TOPIC = '/topic/kb.incidents'
+
+    CLIENT_ID = socket.getfqdn()
+    HEARTBEAT_INTERVAL_MS = 30000
+    HEARTBEAT_RESPONSE_TIMEOUT = 25000
+    RECONNECT_DELAY_SECS = 15
+
+    namespaces = {
+        'ns2': 'http://nationalrail.co.uk/xml/common',
+        'ns3': 'http://nationalrail.co.uk/xml/incident'
+    }
+
+    if USERNAME == '':
+        logging.error(
+            "Username not set - please configure your username\
+                and password in opendata-nationalrail-client.py!")
+
+    conn = stomp.Connection12([(HOSTNAME, HOSTPORT)],
+                              auto_decode=False,
+                              )
+
+    client = StompClient()
+    client.conn = conn
+    conn.set_listener('', client)
+    connect_and_subscribe(conn)
+
+    while True:
+        time.sleep(1)
+
+    conn.disconnect()
