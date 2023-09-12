@@ -31,7 +31,7 @@ if __name__ == "__main__":
         "SHF": "Sheffield"
     }
 
-    run_extract(authentication_realtime, stations)
+    run_extract(authentication_realtime)
 
     input_csv_path = "data/service_data.csv"
     run_transform(input_csv_path)
