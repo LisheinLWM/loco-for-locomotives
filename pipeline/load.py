@@ -134,7 +134,7 @@ def run_load(conn):
 
     data = pd.read_csv("data/transformed_service_data.csv")
 
-    switch_between_schemas(conn, "all_data")
+    switch_between_schemas(conn, "service_data")
     insert_company_data(conn, data)
     insert_station_data(conn, data)
     insert_service_details_data(conn, data)

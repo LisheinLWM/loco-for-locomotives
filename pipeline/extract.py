@@ -156,7 +156,20 @@ def run_extract(authentication_realtime):
     This function is used to run the whole extract script
     so that we can pass it on to other files
     """
-    
+
+    stations = {
+        "BRI": "Bristol Temple Meads",
+        "WAT": "London Waterloo",
+        "BHM": "Birmingham New Street",
+        "NCL": "Newcastle",
+        "YRK": "York",
+        "MAN": "Manchester Piccadilly",
+        "LIV": "Liverpool Lime Street",
+        "LDS": "Leeds",
+        "PAD": "London Paddington",
+        "SHF": "Sheffield"
+    }
+
     yesterday = datetime.now()-timedelta(days=1)
     yesterday_date = yesterday.strftime("%Y/%m/%d")
 
@@ -187,17 +200,4 @@ if __name__ == "__main__":  # pragma: no cover
     authentication_realtime = get_authentication(
         username_realtime, password_realtime)
 
-    stations = {
-        "BRI": "Bristol Temple Meads",
-        "WAT": "London Waterloo",
-        "BHM": "Birmingham New Street",
-        "NCL": "Newcastle",
-        "YRK": "York",
-        "MAN": "Manchester Piccadilly",
-        "LIV": "Liverpool Lime Street",
-        "LDS": "Leeds",
-        "PAD": "London Paddington",
-        "SHF": "Sheffield"
-    }
-
-    run_extract(authentication_realtime, stations)
+    run_extract(authentication_realtime)
