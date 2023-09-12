@@ -1,13 +1,36 @@
-from os import environ, _Environ
+import os
 
 from dotenv import load_dotenv
-from psycopg2 import connect
+import psycopg2
 from psycopg2.extensions import connection
+from psycopg2.extras import RealDictCursor, execute_values
 
 from datetime import datetime, timedelta
 
 import pandas as pd
 from pandas import DataFrame
+
+
+def get_connection(host: str, db_name: str, password: str, user: str):
+    """Connects to the database"""
+
+    try:
+        conn = psycopg2.connect(host=host,
+                                dbname=db_name,
+                                password=password,
+                                user=user,
+                                cursor_factory=RealDictCursor)
+        return conn
+    except Exception as e:
+        print(f"Error {e} occured!")
+
+
+def switch_between_schemas(conn, schema_name: str) -> None:
+    """Switches to the schema by the schema name provided"""
+
+    with conn.cursor() as cur:
+        cur.execute("SET search_path TO %s", (schema_name,))
+    conn.commit()
 
 
 def get_operator_info_df():
@@ -51,10 +74,81 @@ def seed_operator_table(conn: connection, operator_info: DataFrame):
         cur.executemany("""INSERT INTO operator 
                     (operator_name,
                     operator_code,
-                    passenger_satisfaction)
+                    customer_satisfaction)
                     VALUES
                     (%s, %s, %s)
                     ON CONFLICT DO NOTHING;
                     """, operator_info_values)
 
     conn.commit()
+
+
+def load_priority(conn: connection, msg_df: DataFrame):
+    """Load data into the priority table from the incoming message."""
+
+    priority = msg_df[['incident_priority']].values.tolist()
+
+    print(f"priorit {priority}")
+    with conn.cursor() as cur:
+        execute_values(cur, """INSERT INTO priority (priority_code) VALUES %s
+                       ON CONFLICT DO NOTHING;""", priority)
+    conn.commit()
+
+
+def load_incident(conn: connection, msg_df: DataFrame):
+
+    data = msg_df[["incident_number", "version",
+                   "info_link", "summary", "incident_priority", "planned", "creation_time",
+                   "start_time", "end_time"]].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO incident (incident_num, incident_version, link, summary,
+                       priority_id, is_planned, creation_time, start_time, end_time) VALUES (%s,%s,%s,
+                        %s,(SELECT priority_id FROM priority WHERE priority_code = %s), %s, %s, %s, %s)
+                        ON CONFLICT DO NOTHING;""", data)
+    conn.commit()
+
+
+def load_routes(conn: connection, msg_df: DataFrame):
+
+    routes = msg_df[["route_affected"]].values.tolist()
+
+    with conn.cursor() as cur:
+        execute_values(
+            cur, """INSERT INTO route_affected (route_name) VALUES %s ON CONFLICT DO NOTHING""", routes)
+    conn.commit()
+
+
+def load_route_link(conn: connection, msg_df: DataFrame):
+
+    data = msg_df[["route_affected", "version"]].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO incident_route_link (route_id, incident_id) VALUES
+                        ((SELECT route_id FROM route_affected WHERE route_name = %s),
+                        (SELECT incident_id FROM incident WHERE incident_version = %s));""", data)
+    conn.commit()
+
+
+def load_operator_link(conn: connection, msg_df: DataFrame):
+
+    data = msg_df[["affected_operator_ref", "version"]].values.tolist()
+
+    with conn.cursor() as cur:
+        cur.executemany("""INSERT INTO incident_operator_link (operator_id, incident_id) VALUES
+                        ((SELECT operator_id FROM operator WHERE operator_code = %s),
+                        (SELECT incident_id FROM incident WHERE incident_version = %s));""", data)
+    conn.commit()
+
+
+def load_all_incidents(msg):
+
+    load_dotenv()
+    conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
+                          os.environ["DB_PASS"], os.environ["DB_USER"])
+    switch_between_schemas(conn, "incident_data")
+    load_priority(conn, msg)
+    load_incident(conn, msg)
+    load_routes(conn, msg)
+    load_route_link(conn, msg)
+    load_operator_link(conn, msg)
