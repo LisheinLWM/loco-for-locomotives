@@ -1,10 +1,10 @@
 from os import environ
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pandas as pd
 import psycopg2
 import psycopg2.extras
 from psycopg2.extensions import connection
-from datetime import datetime, timedelta
 from xhtml2pdf import pisa
 from boto3 import client
 
@@ -49,7 +49,7 @@ def get_db_connection() -> connection:
         return None
 
 
-def get_data_from_database(conn: connection):
+def get_data_from_database(conn: connection) -> pd.DataFrame:
     """Retrieve the tables for database and return as a data frame."""
 
     # MUST CHANGE BACK TO 1! THIS IS IMPORTANT
@@ -97,7 +97,7 @@ def get_data_from_database(conn: connection):
     return data_df
 
 
-def clean_html_dataframes(data_frame):
+def clean_html_dataframes(data_frame: pd.DataFrame) -> str:
     data_frame_html = data_frame.to_html(
         index=False, classes="center", justify="center")
     data_frame_html = data_frame_html.replace(
@@ -105,7 +105,7 @@ def clean_html_dataframes(data_frame):
     return data_frame_html
 
 
-def export_to_html(data, average_delays, total_services):
+def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_services: pd.DataFrame) -> str:
     """Create the HTML string and export to html file."""
 
     yesterday = datetime.now() - timedelta(days=2)
@@ -130,6 +130,9 @@ def export_to_html(data, average_delays, total_services):
     cancellations_station = data.groupby(
         'origin_station_name')['cancel_code'].count().reset_index()
     cancellations_station = clean_html_dataframes(cancellations_station)
+# FFCA7B - orange
+# B1D4E0 - skyblue
+# 345E7D - darkerblue
 
     html_content = f"""
     <!DOCTYPE html>
@@ -141,16 +144,8 @@ def export_to_html(data, average_delays, total_services):
         <table border="0">
         <tr>
         <td></td>
-        <td>
-        <h1>
-        Report to summary yesterday's data
-        </h1>
-        </td>
-        <td>
-        <h3 align="right">
-        Data for {yesterday_date}
-        </h3>
-        </td>
+        <td><h1>Report to summary yesterday's data</h1></td>
+        <td><h3 align="right">Data for {yesterday_date}</h3></td>
         </tr>
         </table>
 
@@ -180,7 +175,7 @@ def export_to_html(data, average_delays, total_services):
     return html_content
 
 
-def convert_html_to_pdf(source_html, output_filename):
+def convert_html_to_pdf(source_html: str, output_filename: str) -> bool:
     """Using the html provided, outputs a pdf as requested to be stored in s3"""
     result_file = open(output_filename, "w+b")
 
@@ -194,7 +189,7 @@ def convert_html_to_pdf(source_html, output_filename):
     return pisa_status.err
 
 
-def create_report(data):
+def create_report(data: pd.DataFrame):
     """
     Creates the pdf report in one function and 
     calls all functions required to do so
@@ -207,7 +202,7 @@ def create_report(data):
     convert_html_to_pdf(html_data, "test.pdf")
 
 
-def get_average_delays(data_df):
+def get_average_delays(data_df: pd.DataFrame) -> pd.DataFrame:
     """Gets the average delays by company"""
     average_delays = data_df.groupby('company_name')[
         'arrival_lateness'].mean().reset_index()
@@ -218,16 +213,16 @@ def get_average_delays(data_df):
     return average_delays
 
 
-# def upload_to_s3_bucket(file_name):
-#     """Uploads the pdf to our s3 bucket as required."""
-#     amazon_s3 = client("s3", region_name="eu-west-2",
-#                        aws_access_key_id=os.environ["ACCESS_KEY_ID"],
-#                        aws_secret_access_key=os.environ["SECRET_ACCESS_KEY_ID"])
+def upload_to_s3_bucket(file_name):
+    """Uploads the pdf to our s3 bucket as required."""
+    amazon_s3 = client("s3", region_name="eu-west-2",
+                       aws_access_key_id=environ["ACCESS_KEY_ID"],
+                       aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
 
-#     amazon_s3.upload_file(
-#         f'/tmp/{file_name}',
-#         bucket_name,
-#         f'{file_name}')
+    amazon_s3.upload_file(
+        f'/tmp/{file_name}',
+        'c8-loco-test',
+        f'{file_name}')
 
 
 def lambda_handler(event=None, context=None) -> dict:
@@ -235,6 +230,7 @@ def lambda_handler(event=None, context=None) -> dict:
     connection = get_db_connection()
     data_df = get_data_from_database(connection)
     create_report(data_df)
+    upload_to_s3_bucket('test.pdf')
 
     return {
         "statusCode": 200,
