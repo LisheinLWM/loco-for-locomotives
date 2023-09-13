@@ -116,6 +116,13 @@ def export_to_html(data, average_delays, total_services):
     company_html = company_html.replace(
         '<td>', '<td align="center">')
 
+    cancellations = data.groupby('company_name')[
+        'cancel_code'].count().reset_index()
+    cancellations = cancellations.to_html(
+        index=False, classes="center", justify="center")
+    cancellations = cancellations.replace(
+        '<td>', '<td align="center">')
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -133,10 +140,12 @@ def export_to_html(data, average_delays, total_services):
         <p>{average_delays_html}</p>
         <h2><center>Total Delays per Company</center></h2>
         <p>{company_html}</p>
+        <h2><center>Cancellations per Company</center></h2>
+        <p>{cancellations}</p>
     </body>
     </html>
     """
-    print(total_services_html)
+    print(cancellations)
     return html_content
 
 
