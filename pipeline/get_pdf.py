@@ -97,48 +97,39 @@ def get_data_from_database(conn: connection):
     return data_df
 
 
+def clean_html_dataframes(data_frame):
+    data_frame_html = data_frame.to_html(
+        index=False, classes="center", justify="center")
+    data_frame_html = data_frame_html.replace(
+        '<td>', '<td align="center">')
+    return data_frame_html
+
+
 def export_to_html(data, average_delays, total_services):
     """Create the HTML string and export to html file."""
 
     yesterday = datetime.now() - timedelta(days=2)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
 
-    total_services_html = total_services.to_html(
-        index=False, classes="center", justify="center")
-    total_services_html = total_services_html.replace(
-        '<td>', '<td align="center">')
+    total_services_html = clean_html_dataframes(total_services)
 
-    average_delays_html = average_delays.to_html(index=False, classes="center")
-    average_delays_html = average_delays_html.replace(
-        '<td>', '<td align="center">')
+    average_delays_html = clean_html_dataframes(average_delays)
 
     company = data.groupby(
         'company_name')['arrival_lateness'].sum().reset_index()
-    company_html = company.to_html(
-        index=False, classes="center", justify="center")
-    company_html = company_html.replace(
-        '<td>', '<td align="center">')
+    company_html = clean_html_dataframes(company)
 
     cancellations = data.groupby('company_name')[
         'cancel_code'].count().reset_index()
-    cancellations = cancellations.to_html(
-        index=False, classes="center", justify="center")
-    cancellations = cancellations.replace(
-        '<td>', '<td align="center">')
+    cancellations = clean_html_dataframes(cancellations)
 
     delays_station = data.groupby(
         'origin_station_name')['arrival_lateness'].mean().reset_index()
-    delays_station = delays_station.to_html(
-        index=False, classes="center", justify="center")
-    delays_station = delays_station.replace(
-        '<td>', '<td align="center">')
+    delays_station = clean_html_dataframes(delays_station)
 
     cancellations_station = data.groupby(
         'origin_station_name')['cancel_code'].count().reset_index()
-    cancellations_station = cancellations_station.to_html(
-        index=False, classes="center", justify="center")
-    cancellations_station = cancellations_station.replace(
-        '<td>', '<td align="center">')
+    cancellations_station = clean_html_dataframes(cancellations_station)
 
     html_content = f"""
     <!DOCTYPE html>
@@ -147,28 +138,42 @@ def export_to_html(data, average_delays, total_services):
         <title>Report Data</title>
     </head>
     <body>
-        <h1 align="right">
-        <center>
+        <table border="0">
+        <tr>
+        <td></td>
+        <td>
+        <h1>
         Report to summary yesterday's data
-        </center>
-        Data for {yesterday_date}
         </h1>
-        <align="center">
-        The total number of services on {yesterday_date} was {data["service_uid"].count()}.
+        </td>
+        <td>
+        <h3 align="right">
+        Data for {yesterday_date}
+        </h3>
+        </td>
+        </tr>
+        </table>
 
-        <h2><center>Total services per station</center></h2>
+        <center>
+        <table border="0.1">
+        <tr><td>Total number of service</td><td>{data["service_uid"].count()}</td></tr>
+        <tr><td>Total number of delays</td><td>{data["arrival_lateness"].count()}</td></tr>
+        <tr><td>Total number of cancellations </td><td>{data["cancel_code"].count()}</td></tr>
+        <tr><td>Average delay</td><td>{data["arrival_lateness"].mean()}</td></tr>
+        </table>
+        <h3><center>Total services per station</center></h3>
         <p> {total_services_html} </p>
-        <h2><center>Average Delays per Company</center></h2>
+        <h3><center>Average Delays per Company</center></h3>
         <p>{average_delays_html}</p>
-        <h2><center>Total Delays per Company</center></h2>
+        <h3><center>Total Delays per Company</center></h3>
         <p>{company_html}</p>
-        <h2><center>Cancellations per Company</center></h2>
+        <h3><center>Cancellations per Company</center></h3>
         <p>{cancellations}</p>
-        <h2><center>Delays per Station</center></h2>
+        <h3><center>Delays per Station</center></h3>
         <p>{delays_station}</p>
-        <h2><center>Cancellations per Station</center></h2>
+        <h3><center>Cancellations per Station</center></h3>
         <p>{cancellations_station}</p>
-
+        </center>
     </body>
     </html>
     """
