@@ -123,6 +123,20 @@ def export_to_html(data, average_delays, total_services):
     cancellations = cancellations.replace(
         '<td>', '<td align="center">')
 
+    delays_station = data.groupby(
+        'origin_station_name')['arrival_lateness'].mean().reset_index()
+    delays_station = delays_station.to_html(
+        index=False, classes="center", justify="center")
+    delays_station = delays_station.replace(
+        '<td>', '<td align="center">')
+
+    cancellations_station = data.groupby(
+        'origin_station_name')['cancel_code'].count().reset_index()
+    cancellations_station = cancellations_station.to_html(
+        index=False, classes="center", justify="center")
+    cancellations_station = cancellations_station.replace(
+        '<td>', '<td align="center">')
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -142,10 +156,14 @@ def export_to_html(data, average_delays, total_services):
         <p>{company_html}</p>
         <h2><center>Cancellations per Company</center></h2>
         <p>{cancellations}</p>
+        <h2><center>Delays per Station</center></h2>
+        <p>{delays_station}</p>
+        <h2><center>Cancellations per Station</center></h2>
+        <p>{cancellations_station}</p>
     </body>
     </html>
     """
-    print(cancellations)
+    print(delays_station)
     return html_content
 
 
