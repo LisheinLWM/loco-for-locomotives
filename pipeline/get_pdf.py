@@ -6,6 +6,7 @@ import psycopg2.extras
 from psycopg2.extensions import connection
 from datetime import datetime, timedelta
 from xhtml2pdf import pisa
+from boto3 import client
 
 CSV_COLUMNS = [
     "cancel_code_id",
@@ -49,9 +50,10 @@ def get_db_connection() -> connection:
 
 
 def get_data_from_database(conn: connection):
-    """ Retrieve the tables for database and return as a data frame."""
+    """Retrieve the tables for database and return as a data frame."""
 
-    yesterday = datetime.now() - timedelta(days=1)
+    # MUST CHANGE BACK TO 1! THIS IS IMPORTANT
+    yesterday = datetime.now() - timedelta(days=2)
     yesterday_date = yesterday.strftime("%Y-%m-%d")
 
     query = """
@@ -96,7 +98,24 @@ def get_data_from_database(conn: connection):
 
 
 def export_to_html(data, average_delays, total_services):
-    """ Create the HTML string and export to html file."""
+    """Create the HTML string and export to html file."""
+
+    total_services_html = total_services.to_html(
+        index=False, classes="center", justify="center")
+    total_services_html = total_services_html.replace(
+        '<td>', '<td align="center">')
+
+    average_delays_html = average_delays.to_html(index=False, classes="center")
+    average_delays_html = average_delays_html.replace(
+        '<td>', '<td align="center">')
+
+    company = data.groupby(
+        'company_name')['arrival_lateness'].sum().reset_index()
+    company_html = company.to_html(
+        index=False, classes="center", justify="center")
+    company_html = company_html.replace(
+        '<td>', '<td align="center">')
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
@@ -105,24 +124,24 @@ def export_to_html(data, average_delays, total_services):
     </head>
     <body>
         <h1>
+        <center>
         Total services
+        </center>
         </h1>
-        <p> {total_services.to_html(index=False)} </p>
-        
-        <h1>Report Data</h1>
-        <p> {data.to_html(index=False)}</p>
-        
-        
-        <h2>Average Delays per Company</h2>
-        {average_delays.to_html(index=False)}
+        <p> {total_services_html} </p>
+        <h2><center>Average Delays per Company</center></h2>
+        <p>{average_delays_html}</p>
+        <h2><center>Total Delays per Company</center></h2>
+        <p>{company_html}</p>
     </body>
     </html>
     """
+    print(total_services_html)
     return html_content
 
 
 def convert_html_to_pdf(source_html, output_filename):
-
+    """Using the html provided, outputs a pdf as requested to be stored in s3"""
     result_file = open(output_filename, "w+b")
 
     pisa_status = pisa.CreatePDF(
@@ -136,6 +155,10 @@ def convert_html_to_pdf(source_html, output_filename):
 
 
 def create_report(data):
+    """
+    Creates the pdf report in one function and 
+    calls all functions required to do so
+    """
     average = get_average_delays(data)
     total_services = data.groupby(
         'origin_station_name').size().reset_index(name='total_services')
@@ -145,7 +168,7 @@ def create_report(data):
 
 
 def get_average_delays(data_df):
-
+    """Gets the average delays by company"""
     average_delays = data_df.groupby('company_name')[
         'arrival_lateness'].mean().reset_index()
 
@@ -153,6 +176,18 @@ def get_average_delays(data_df):
         by='arrival_lateness', ascending=False).head(20)
 
     return average_delays
+
+
+# def upload_to_s3_bucket(file_name):
+#     """Uploads the pdf to our s3 bucket as required."""
+#     amazon_s3 = client("s3", region_name="eu-west-2",
+#                        aws_access_key_id=os.environ["ACCESS_KEY_ID"],
+#                        aws_secret_access_key=os.environ["SECRET_ACCESS_KEY_ID"])
+
+#     amazon_s3.upload_file(
+#         f'/tmp/{file_name}',
+#         bucket_name,
+#         f'{file_name}')
 
 
 def lambda_handler(event=None, context=None) -> dict:
