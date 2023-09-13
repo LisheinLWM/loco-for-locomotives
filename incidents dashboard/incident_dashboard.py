@@ -96,15 +96,24 @@ def display_most_recent_incident(conn):
             i.summary,
             p.priority_code,
             i.start_time,
-            i.end_time;
+            i.end_time
+        LIMIT 100;
         """
 
         data = pd.read_sql_query(query, conn)
     
     conn.commit()
+    
+    idx = data.groupby('Incident Number')['incident_version'].idxmax()
+    data = data.loc[idx]
+
 
     st.write("MOST RECENT INCIDENTS:")
-    st.write(data)
+    st.markdown("""<style>
+            thead tr th:first-child {display:none}
+            tbody th {display:none}
+            </style>""", unsafe_allow_html=True)
+    st.dataframe(data, hide_index=True)
 
 
 def get_subscription_count(sns: ServiceResource, operator_code: str) -> int:
@@ -224,12 +233,18 @@ if __name__ == "__main__":
                     'HX', 'HT', 'GR', 'LD', 'ME', 'NT',
                     'SR', 'SE', 'TP', 'AW', 'LM', 'GX',
                     'GN', 'SN', 'TL', 'SW', 'IL']
-    
+
     st.title("DISRUPTION DETECT")
+
+    st.divider()
 
     show_metrics_for_given_operator(sns_client, operator_list)
 
+    st.divider()
+
     create_incident_subscription_form(operator_list)
+
+    st.divider()
 
     display_most_recent_incident(conn)
 
