@@ -100,6 +100,9 @@ def get_data_from_database(conn: connection):
 def export_to_html(data, average_delays, total_services):
     """Create the HTML string and export to html file."""
 
+    yesterday = datetime.now() - timedelta(days=2)
+    yesterday_date = yesterday.strftime("%d-%m-%Y")
+
     total_services_html = total_services.to_html(
         index=False, classes="center", justify="center")
     total_services_html = total_services_html.replace(
@@ -144,11 +147,16 @@ def export_to_html(data, average_delays, total_services):
         <title>Report Data</title>
     </head>
     <body>
-        <h1>
+        <h1 align="right">
         <center>
-        Total services
+        Report to summary yesterday's data
         </center>
+        Data for {yesterday_date}
         </h1>
+        <align="center">
+        The total number of services on {yesterday_date} was {data["service_uid"].count()}.
+
+        <h2><center>Total services per station</center></h2>
         <p> {total_services_html} </p>
         <h2><center>Average Delays per Company</center></h2>
         <p>{average_delays_html}</p>
@@ -160,10 +168,10 @@ def export_to_html(data, average_delays, total_services):
         <p>{delays_station}</p>
         <h2><center>Cancellations per Station</center></h2>
         <p>{cancellations_station}</p>
+
     </body>
     </html>
     """
-    print(delays_station)
     return html_content
 
 
