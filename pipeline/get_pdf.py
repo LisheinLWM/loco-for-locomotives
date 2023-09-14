@@ -8,10 +8,6 @@ import psycopg2.extras
 from psycopg2.extensions import connection
 from xhtml2pdf import pisa
 from boto3 import client
-import matplotlib.pyplot as plt
-import plotly_express as px
-
-
 import altair as alt
 from altair.vegalite.v5.api import Chart
 
@@ -59,7 +55,7 @@ def get_db_connection() -> connection:
 def get_data_from_database(conn: connection) -> pd.DataFrame:
     """Retrieve the tables for database and return as a data frame."""
 
-    yesterday = datetime.now() - timedelta(days=2)
+    yesterday = datetime.now() - timedelta(days=1)
     yesterday_date = yesterday.strftime("%Y-%m-%d")
 
     query = """
@@ -114,7 +110,7 @@ def clean_html_dataframes(data_frame: pd.DataFrame) -> str:
 def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_services: pd.DataFrame) -> str:
     """Create the HTML string and export to html file."""
 
-    yesterday = datetime.now() - timedelta(days=2)
+    yesterday = datetime.now() - timedelta(days=1)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
 
     total_services_html = clean_html_dataframes(total_services)
@@ -136,16 +132,6 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
     cancellations_station = data.groupby(
         'origin_station_name')['cancel_code'].count().reset_index()
     cancellations_station = clean_html_dataframes(cancellations_station)
-# FFCA7B - orange
-# B1D4E0 - skyblue
-# 345E7D - darkerblue
-
-# Total services: len(data)
-# Total delays: (data["cancel_code"] > 0).count()
-# Total cancellations: data["cancellation_id"].count()
-
-    # img_bytes = px.scatter([1, 2, 3], [4, 5, 6]).to_image()
-    # img = base64.b64encode(img_bytes).decode("utf-8")
 
     cancellations_per_station = data[data['cancellation_id'].notnull()].groupby(
         'origin_station_name')['cancellation_id'].count().reset_index()
@@ -279,8 +265,8 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
             <table border="0" style="background-color: #B1D4E0">
             <tr>
             <td><img style="width: 50px; height: 50px; background: #B1D4E0";" src="logo.png" alt="Logo" /></td>
-            <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Report to summary yesterday's data</h1></td>
-            <td><h3 align="right">Data for {yesterday_date}</h3></td>
+            <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Daily report</h1></td>
+            <td><h3 align="right">{yesterday_date}</h3></td>
             </tr>
             </table>
             <br />
@@ -355,12 +341,14 @@ def create_report(data: pd.DataFrame):
     Creates the pdf report in one function and 
     calls all functions required to do so
     """
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_date = yesterday.strftime("%d-%m-%Y")
     average = get_average_delays(data)
     total_services = data.groupby(
         'origin_station_name').size().reset_index(name='total_services')
     html_data = export_to_html(data, average, total_services)
 
-    convert_html_to_pdf(html_data, "test.pdf")
+    convert_html_to_pdf(html_data, f"daily_report_{yesterday_date}.pdf")
 
 
 def get_average_delays(data_df: pd.DataFrame) -> pd.DataFrame:
@@ -374,16 +362,16 @@ def get_average_delays(data_df: pd.DataFrame) -> pd.DataFrame:
     return average_delays
 
 
-# def upload_to_s3_bucket(file_name):
-#     """Uploads the pdf to our s3 bucket as required."""
-#     amazon_s3 = client("s3", region_name="eu-west-2",
-#                        aws_access_key_id=environ["ACCESS_KEY_ID"],
-#                        aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
+def upload_to_s3_bucket(file_name):
+    """Uploads the pdf to our s3 bucket as required."""
+    amazon_s3 = client("s3", region_name="eu-west-2",
+                       aws_access_key_id=environ["ACCESS_KEY_ID"],
+                       aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
 
-#     amazon_s3.upload_file(
-#         f'/tmp/{file_name}',
-#         'c8-loco-test',
-#         f'{file_name}')
+    amazon_s3.upload_file(
+        f'/tmp/{file_name}',
+        'c8-loco-test',
+        f'{file_name}')
 
 
 def lambda_handler(event=None, context=None) -> dict:
