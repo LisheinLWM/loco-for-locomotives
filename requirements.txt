@@ -11,3 +11,6 @@ pytest-coverage
 html5lib
 bs4
 xhtml2pdf
+matplotlib
+boto3
+vl-convert-python

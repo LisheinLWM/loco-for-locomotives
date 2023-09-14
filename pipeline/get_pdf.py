@@ -1,4 +1,5 @@
 from os import environ
+import base64
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import pandas as pd
@@ -7,6 +8,12 @@ import psycopg2.extras
 from psycopg2.extensions import connection
 from xhtml2pdf import pisa
 from boto3 import client
+import matplotlib.pyplot as plt
+import plotly_express as px
+
+
+import altair as alt
+from altair.vegalite.v5.api import Chart
 
 CSV_COLUMNS = [
     "cancel_code_id",
@@ -53,7 +60,7 @@ def get_data_from_database(conn: connection) -> pd.DataFrame:
     """Retrieve the tables for database and return as a data frame."""
 
     # MUST CHANGE BACK TO 1! THIS IS IMPORTANT
-    yesterday = datetime.now() - timedelta(days=2)
+    yesterday = datetime.now() - timedelta(days=7)
     yesterday_date = yesterday.strftime("%Y-%m-%d")
 
     query = """
@@ -108,7 +115,7 @@ def clean_html_dataframes(data_frame: pd.DataFrame) -> str:
 def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_services: pd.DataFrame) -> str:
     """Create the HTML string and export to html file."""
 
-    yesterday = datetime.now() - timedelta(days=2)
+    yesterday = datetime.now() - timedelta(days=7)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
 
     total_services_html = clean_html_dataframes(total_services)
@@ -134,26 +141,173 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
 # B1D4E0 - skyblue
 # 345E7D - darkerblue
 
+# Total services: len(data)
+# Total delays: (data["cancel_code"] > 0).count()
+# Total cancellations: data["cancellation_id"].count()
+
+    # img_bytes = px.scatter([1, 2, 3], [4, 5, 6]).to_image()
+    # img = base64.b64encode(img_bytes).decode("utf-8")
+
+    cancellations_per_station = data[data['cancellation_id'].notnull()].groupby(
+        'origin_station_name')['cancellation_id'].count().reset_index()
+    cancellations_per_station = cancellations_per_station.rename(
+        columns={'cancellation_id': 'cancellation_count'})
+
+    cancellations_per_company = data[data['cancellation_id'].notnull()].groupby(
+        'company_name')['cancellation_id'].count().reset_index()
+    cancellations_per_company = cancellations_per_company.rename(
+        columns={'cancellation_id': 'cancellation_count'})
+
+    cancellations_per_station = cancellations_per_station.sort_values(
+        by='cancellation_count', ascending=False).head(20)
+
+    alt.Chart(cancellations_per_station).mark_line(
+        color="#B1D4E0"
+    ).encode(
+        x=alt.X('origin_station_name:N', title='STATION NAME'),
+        y=alt.Y('cancellation_count:Q', title='NUMBER OF CANCELLATIONS'),
+        tooltip=[alt.Tooltip('origin_station_name:N', title='STATION NAME'),
+                 alt.Tooltip('cancellation_count:Q', title='NUMBER OF CANCELLATIONS')]
+    ).properties(
+        width=600,
+        height=400
+    ).configure_axis(
+        labelAngle=90,
+        labelColor="#1f5475",
+        titleColor="#1f5475"
+    ).save("testing.png")
+
+    with open("testing.png", "rb") as f:
+        img_bytes = f.read()
+        img = base64.b64encode(img_bytes).decode("utf-8")
+
+    alt.Chart(cancellations_per_company).mark_line(
+        color="#B1D4E0"
+    ).encode(
+        x=alt.X('company_name:N', title='COMPANY NAME'),
+        y=alt.Y('cancellation_count:Q', title='NUMBER OF CANCELLATIONS'),
+        tooltip=[alt.Tooltip('company_name:N', title='COMPANY NAME'),
+                 alt.Tooltip('cancellation_count:Q', title='NUMBER OF CANCELLATIONS')]
+    ).properties(
+        width=600,
+        height=400
+    ).configure_axis(
+        labelAngle=90,
+        labelColor="#1f5475",
+        titleColor="#1f5475"
+    ).save("testing2.png")
+
+    with open("testing2.png", "rb") as f:
+        img2_bytes = f.read()
+        img2 = base64.b64encode(img2_bytes).decode("utf-8")
+
+    average_delays2 = data.groupby('origin_station_name')[
+        'arrival_lateness'].mean().reset_index()
+
+    average_delays2 = average_delays2.sort_values(by='arrival_lateness',
+                                                  ascending=False).head(20)
+
+    alt.Chart(average_delays2).mark_bar(
+        color="#B1D4E0"
+    ).encode(
+        y=alt.Y('origin_station_name:N', title='STATION NAME',
+                sort=alt.EncodingSortField(field='arrival_lateness', order='descending')),
+        x=alt.X('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)'),
+        tooltip=[alt.Tooltip('origin_station_name:N', title='STATION NAME'),
+                 alt.Tooltip('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)')]
+    ).properties(
+        width=600,
+        height=500
+    ).configure_axis(
+        labelAngle=0,
+        labelColor="#1f5475",
+        titleColor="#1f5475"
+    ).save('testing3.png')
+
+    with open("testing3.png", "rb") as f:
+        img3_bytes = f.read()
+        img3 = base64.b64encode(img3_bytes).decode("utf-8")
+
+    average_delays3 = data.groupby('company_name')[
+        'arrival_lateness'].mean().reset_index()
+
+    average_delays3 = average_delays3.sort_values(by='arrival_lateness',
+                                                  ascending=False).head(20)
+
+    alt.Chart(average_delays3).mark_bar(
+        color="#B1D4E0"
+    ).encode(
+        y=alt.Y('company_name:N', title='COMPANY NAME',
+                sort=alt.EncodingSortField(field='arrival_lateness', order='descending')),
+        x=alt.X('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)'),
+        tooltip=[alt.Tooltip('company_name:N', title='COMPANY NAME'),
+                 alt.Tooltip('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)')]
+    ).properties(
+        width=600,
+        height=500
+    ).configure_axis(
+        labelAngle=0,
+        labelColor="#1f5475",
+        titleColor="#1f5475"
+    ).save('testing4.png')
+
+    with open("testing4.png", "rb") as f:
+        img4_bytes = f.read()
+        img4 = base64.b64encode(img4_bytes).decode("utf-8")
+
     html_content = f"""
     <!DOCTYPE html>
     <html>
     <head>
         <title>Report Data</title>
+        <style>
+    .grid{{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: auto;
+            width: 100%;
+            margin: 0;
+    
+    }}
+    .title-container {{
+  display: flex;
+  flex-direction: row;
+}}
+</style>
     </head>
     <body>
-        <table border="0">
-        <tr>
-        <td></td>
-        <td><h1>Report to summary yesterday's data</h1></td>
-        <td><h3 align="right">Data for {yesterday_date}</h3></td>
-        </tr>
-        </table>
+            <div class="title-container">
+            <table border="0">
+            <tr>
+            <td></td>
+            <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Report to summary yesterday's data</h1></td>
+            <td><h3 align="right">Data for {yesterday_date}</h3></td>
+            </tr>
+            </table>
+            </div>
+            
+            <div>
+            <img style="width: 250; height: 250" src="data:image/png;base64,{img}">
+            <img style="width: 250; height: 250" src="data:image/png;base64,{img2}">
+            </div>
+            
+            <div class="title-container">
+            <img style="width: 250; height: 250" src="data:image/png;base64,{img3}">
+            <img style="width: 250; height: 250" src="data:image/png;base64,{img4}">
+            </div>
+            
+            <div class="title-container">
+            </div>       
 
         <center>
         <table border="0.1">
-        <tr><td>Total number of service</td><td>{data["service_uid"].count()}</td></tr>
+        <tr><td>Total number of services</td><td>{data["service_uid"].count()}</td></tr>
+        <tr><td>Total number of delays</td><td>{data["arrival_lateness"].sum()}</td></tr>
+        <tr><td>Total number of delays</td><td>{(data["arrival_lateness"] > 0).sum()}</td></tr>
         <tr><td>Total number of delays</td><td>{data["arrival_lateness"].count()}</td></tr>
+        <tr><td>Total number of delays</td><td>{(data["arrival_lateness"] > 0).count()}</td></tr>
         <tr><td>Total number of cancellations </td><td>{data["cancel_code"].count()}</td></tr>
+        <tr><td>Total number of cancellations </td><td>{data["cancellation_id"].count()}</td></tr>
         <tr><td>Average delay</td><td>{data["arrival_lateness"].mean()}</td></tr>
         </table>
         <h3><center>Total services per station</center></h3>
@@ -213,16 +367,16 @@ def get_average_delays(data_df: pd.DataFrame) -> pd.DataFrame:
     return average_delays
 
 
-def upload_to_s3_bucket(file_name):
-    """Uploads the pdf to our s3 bucket as required."""
-    amazon_s3 = client("s3", region_name="eu-west-2",
-                       aws_access_key_id=environ["ACCESS_KEY_ID"],
-                       aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
+# def upload_to_s3_bucket(file_name):
+#     """Uploads the pdf to our s3 bucket as required."""
+#     amazon_s3 = client("s3", region_name="eu-west-2",
+#                        aws_access_key_id=environ["ACCESS_KEY_ID"],
+#                        aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
 
-    amazon_s3.upload_file(
-        f'/tmp/{file_name}',
-        'c8-loco-test',
-        f'{file_name}')
+#     amazon_s3.upload_file(
+#         f'/tmp/{file_name}',
+#         'c8-loco-test',
+#         f'{file_name}')
 
 
 def lambda_handler(event=None, context=None) -> dict:
@@ -230,7 +384,7 @@ def lambda_handler(event=None, context=None) -> dict:
     connection = get_db_connection()
     data_df = get_data_from_database(connection)
     create_report(data_df)
-    upload_to_s3_bucket('test.pdf')
+    # upload_to_s3_bucket('test.pdf')
 
     return {
         "statusCode": 200,
