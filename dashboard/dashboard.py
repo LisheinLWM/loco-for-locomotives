@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 
 import altair as alt
 from altair.vegalite.v5.api import Chart
+import toml
 
 CSV_COLUMNS = [
     "cancel_code_id",
@@ -760,8 +761,6 @@ def plot_cancellations_by_company_and_reason(data_df: pd.DataFrame):
 
     st.altair_chart(chart, use_container_width=True)
 
-
-
 if __name__ == "__main__":
 
     load_dotenv()
@@ -772,15 +771,30 @@ if __name__ == "__main__":
         page_title="Train Services Monitoring Dashboard", layout="wide")
    
     
+    primaryColor = toml.load(".streamlit/config.toml")['theme']['backgroundColor']
+    s = f"""
+    <style>
+    div.stButton > button:first-child {{background-color: {primaryColor};}}
+    <style>
+    """
+    st.markdown(s, unsafe_allow_html=True)
     st.sidebar.image("logo.png", use_column_width=True)
 
     sidebar_header("FILTER OPTIONS:")
-    sidebar_header("SELECT A PAGE")
-
     # Sidebar navigation
-    page = st.sidebar.selectbox("", ["STATION PAGE", "COMPANY PAGE"])
+    # Initialize a boolean variable to control the default page
+    station_page_default = True
 
-    if page == "STATION PAGE":
+    station_page_button = st.sidebar.button("STATION PAGE", use_container_width=True)
+    company_page_button = st.sidebar.button("COMPANY PAGE", use_container_width=True)
+
+    if station_page_button:
+        station_page_default = True  # Set the variable to True for Station Page
+
+    if company_page_button:
+        station_page_default = False
+
+    if station_page_default:
         dashboard_header("STATION")
         sidebar_header("SELECT STATION")
         select_station = st.sidebar.multiselect(
@@ -805,7 +819,7 @@ if __name__ == "__main__":
         create_arrival_lateness_line_chart_by_hour(database_df)
         plot_cancel_codes_frequency_with_reasons(database_df)
 
-    elif page == "COMPANY PAGE":
+    else:
         dashboard_header("COMPANY")
         sidebar_header("SELECT COMPANY")
         select_companies = st.sidebar.multiselect(
@@ -826,3 +840,68 @@ if __name__ == "__main__":
 
         plot_percentage_of_services_reaching_final_destination_by_company(database_df)
         #plot_arrival_lateness_over_time_by_company(database_df)
+
+# if __name__ == "__main__":
+
+#     load_dotenv()
+#     connection = get_db_connection()
+#     database_df = get_live_database(connection)
+
+#     st.set_page_config(
+#         page_title="Train Services Monitoring Dashboard", layout="wide")
+   
+    
+#     st.sidebar.image("logo.png", use_column_width=True)
+
+#     sidebar_header("FILTER OPTIONS:")
+#     sidebar_header("SELECT A PAGE")
+
+#     # Sidebar navigation
+#     page = st.sidebar.selectbox("", ["STATION PAGE", "COMPANY PAGE"])
+
+#     if page == "STATION PAGE":
+#         dashboard_header("STATION")
+#         sidebar_header("SELECT STATION")
+#         select_station = st.sidebar.multiselect(
+#             ".", options=database_df["origin_station_name"].unique())
+
+#         first_row_display(database_df)
+#         second_row_display(database_df)
+
+#         plot_average_delays_by_station(database_df, select_station)
+#         plot_cancellations_per_station(database_df, select_station)
+
+#         col1, col2 = st.columns(2)
+
+#         with col1:
+#             plot_bus_replacements_per_station(database_df, select_station)
+        
+#         with col2:
+#             plot_percentage_of_services_reaching_final_destination(database_df, select_station)
+            
+        
+#         create_scatter_plot_arrival_lateness_vs_scheduled(database_df)
+#         create_arrival_lateness_line_chart_by_hour(database_df)
+#         plot_cancel_codes_frequency_with_reasons(database_df)
+
+#     elif page == "COMPANY PAGE":
+#         dashboard_header("COMPANY")
+#         sidebar_header("SELECT COMPANY")
+#         select_companies = st.sidebar.multiselect(
+#             ":", options=database_df["company_name"].unique())
+        
+#         col1, col2 = st.columns(2)
+
+#         with col1:
+#             plot_most_average_delays_by_company(database_df, select_companies)
+        
+#         with col2:
+#             plot_cancellations_by_company(database_df)
+        
+#         #create_arrival_lateness_line_chart_of_company_by_hour(database_df, select_companies)
+#         plot_cancellations_by_company_and_reason(database_df)
+
+#         col1, col2 = st.columns(2)
+
+#         plot_percentage_of_services_reaching_final_destination_by_company(database_df)
+#         #plot_arrival_lateness_over_time_by_company(database_df)
