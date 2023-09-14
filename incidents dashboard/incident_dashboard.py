@@ -50,7 +50,7 @@ def generate_sns_client(environ: _Environ) -> ServiceResource:
 
 def display_headline_figures(incident_df: DataFrame):
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
     incident_df = incident_df.loc[idx]
     with col1:
@@ -64,8 +64,17 @@ def display_headline_figures(incident_df: DataFrame):
                                          incident_df['end_time'].isna())]
         st.metric("ACTIVE INCIDENTS ", len(current_incidents))
     with col3:
-        pass
-    
+        operator_counts = incident_df['operator_code'].value_counts()
+        operator_with_highest_incidents = operator_counts.idxmax()
+        highest_incident_count = operator_counts.max()
+        st.metric("OPERATOR W/ MOST INCIDENTS ", f"{operator_with_highest_incidents} ({highest_incident_count})")
+    with col4:
+        incident_priority_counts = incident_df['priority_code'].value_counts()
+        priority_with_highest_count = incident_priority_counts.idxmax()
+        highest_incident_priority_count = incident_priority_counts.max()
+
+        st.metric("MOST COMMON INCIDENT PRIORITY", f"{priority_with_highest_count} ({highest_incident_priority_count})")
+
 
 def display_most_recent_incident(conn):
 
@@ -122,7 +131,7 @@ def display_most_recent_incident(conn):
     idx = data.groupby('Incident Number')['incident_version'].idxmax()
     data = data.loc[idx]
 
-    st.write("MOST RECENT INCIDENTS:")
+    st.subheader("MOST RECENT INCIDENTS:")
     st.markdown("""<style>
             thead tr th:first-child {display:none}
             tbody th {display:none}
@@ -150,7 +159,7 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
                                     incident_df: DataFrame):
 
     code = st.selectbox('SELECT OPERATOR TO VIEW METRICS FOR', options=operator_list)
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("TOTAL SUBSCRIPTIONS, ALL OPERATORS",
                   calculate_total_subscriptions(sns_client, operator_list))
@@ -160,7 +169,13 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
     incident_df = incident_df.loc[idx]
     with col3:
         st.metric(f"{code} TOTAL INCIDENTS", len(incident_df[incident_df["operator_code"] == code]))
-        
+    with col4:
+        current_time = datetime.now()
+        incident_df = incident_df[incident_df['operator_code'].isin([code])]
+        current_incidents = incident_df[(incident_df['start_time'] <= current_time) & 
+                                        ((current_time <= incident_df['end_time']) |
+                                         incident_df['end_time'].isna())]
+        st.metric(f"{code} ACTIVE INCIDENTS", len(current_incidents))
 
 def create_incident_subscription_form(operator_list: list[str]):
 
@@ -233,6 +248,48 @@ def set_search_path(conn: connection) -> None:
     conn.commit()
 
 
+def bar_graph_avg_incidents_per_day_per_operator(df: DataFrame) -> None:
+
+    idx = df.groupby('incident_num')['incident_version'].idxmax()
+    df = df.loc[idx]
+    
+    df['start_time'] = pd.to_datetime(df['start_time'])
+
+    operator_avg_incidents = df.groupby(['operator_code', df['start_time'].dt.date])['incident_id'].count().reset_index()
+    operator_avg_incidents = operator_avg_incidents.rename(columns={'incident_id': 'avg_incidents'})
+
+    st.subheader("AVERAGE INCIDENTS PER DAY BY OPERATOR\n")
+
+    chart = alt.Chart(operator_avg_incidents).mark_bar().encode(
+        x='operator_code:N',
+        y='mean(avg_incidents):Q',
+        color='operator_code:N'
+    ).properties(
+        width=600
+    )
+
+    st.altair_chart(chart, use_container_width=True)
+
+
+def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
+
+    df['start_time'] = pd.to_datetime(df['start_time'])
+
+    route_avg_incidents = df.groupby(['route_name', df['start_time'].dt.date])['incident_id'].count().reset_index()
+    route_avg_incidents = route_avg_incidents.rename(columns={'incident_id': 'avg_incidents'})
+
+    st.subheader("AVERAGE INCIDENTS PER DAY BY PER ROUTE\n")
+
+    bar_chart = alt.Chart(route_avg_incidents).mark_bar().encode(
+        x=alt.X('route_name:N', title='Route'),
+        y=alt.Y('mean(avg_incidents):Q', title='Average Incidents per Day')
+    ).properties(
+        width=600
+    )
+
+    bar_chart
+
+
 if __name__ == "__main__":
 
     load_dotenv()
@@ -272,3 +329,14 @@ if __name__ == "__main__":
 
     display_most_recent_incident(conn)
 
+    st.divider()
+
+    selected_operators = st.sidebar.multiselect("Operator", set(incident_df["operator_name"].unique().tolist()))
+    operator_filtered_df = incident_df[incident_df['operator_name'].isin(selected_operators)]
+    bar_graph_avg_incidents_per_day_per_operator(operator_filtered_df)
+
+    st.divider()
+
+    selected_routes = st.sidebar.multiselect("Route", set(incident_df["route_name"].unique().tolist()))
+    route_filtered_df = incident_df[incident_df['route_name'].isin(selected_routes)]
+    bar_graph_avg_incidents_per_day_per_route(route_filtered_df)
