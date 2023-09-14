@@ -16,4 +16,4 @@ __pycache__
 *.html
 .DS_Store
 test.pdf
-*.png
+t*.png

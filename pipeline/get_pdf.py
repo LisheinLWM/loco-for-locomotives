@@ -59,8 +59,7 @@ def get_db_connection() -> connection:
 def get_data_from_database(conn: connection) -> pd.DataFrame:
     """Retrieve the tables for database and return as a data frame."""
 
-    # MUST CHANGE BACK TO 1! THIS IS IMPORTANT
-    yesterday = datetime.now() - timedelta(days=7)
+    yesterday = datetime.now() - timedelta(days=2)
     yesterday_date = yesterday.strftime("%Y-%m-%d")
 
     query = """
@@ -115,7 +114,7 @@ def clean_html_dataframes(data_frame: pd.DataFrame) -> str:
 def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_services: pd.DataFrame) -> str:
     """Create the HTML string and export to html file."""
 
-    yesterday = datetime.now() - timedelta(days=7)
+    yesterday = datetime.now() - timedelta(days=2)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
 
     total_services_html = clean_html_dataframes(total_services)
@@ -261,54 +260,60 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
     <head>
         <title>Report Data</title>
         <style>
-    .grid{{
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto;
+        .title-container {{
+            display: flex;
+            flex-direction: row;
+        }}
+        table {{
             width: 100%;
-            margin: 0;
-    
-    }}
-    .title-container {{
-  display: flex;
-  flex-direction: row;
-}}
+        }}
+        td {{
+            text-align: center;
+            vertical-align: bottom;
+            padding: 1px;
+        }}
 </style>
     </head>
     <body>
             <div class="title-container">
-            <table border="0">
+            <table border="0" style="background-color: #B1D4E0">
             <tr>
-            <td></td>
+            <td><img style="width: 50px; height: 50px; background: #B1D4E0";" src="logo.png" alt="Logo" /></td>
             <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Report to summary yesterday's data</h1></td>
             <td><h3 align="right">Data for {yesterday_date}</h3></td>
             </tr>
             </table>
+            <br />
             </div>
-            
             <div>
-            <img style="width: 250; height: 250" src="data:image/png;base64,{img}">
-            <img style="width: 250; height: 250" src="data:image/png;base64,{img2}">
+            <table border="0">
+            <tr>
+            <td>
+            <h2>Cancellations per Station</h2>
+            <img style="width: 250; height: 200" src="data:image/png;base64,{img}">
+            </td>
+            <td>
+            <h2>Cancellations per Company</h2>
+            <img style="width: 250; height: 200" src="data:image/png;base64,{img2}"></td>
+            </tr>
+            </table>
             </div>
-            
-            <div class="title-container">
-            <img style="width: 250; height: 250" src="data:image/png;base64,{img3}">
-            <img style="width: 250; height: 250" src="data:image/png;base64,{img4}">
+            <div>
+            <h2 align="center">Average Delays per Station</h2>
+            <img style="width: 500; height: 200" src="data:image/png;base64,{img3}">
+            </div><div>
+            <h2 align="center">Average Delays per Company</h2>
+            <img style="width: 500; height: 200" src="data:image/png;base64,{img4}">
             </div>
-            
-            <div class="title-container">
-            </div>       
+            <br /><br /><br /><br />
 
         <center>
+        <h3>Key Statistics</h3>
         <table border="0.1">
         <tr><td>Total number of services</td><td>{data["service_uid"].count()}</td></tr>
-        <tr><td>Total number of delays</td><td>{data["arrival_lateness"].sum()}</td></tr>
-        <tr><td>Total number of delays</td><td>{(data["arrival_lateness"] > 0).sum()}</td></tr>
         <tr><td>Total number of delays</td><td>{data["arrival_lateness"].count()}</td></tr>
-        <tr><td>Total number of delays</td><td>{(data["arrival_lateness"] > 0).count()}</td></tr>
-        <tr><td>Total number of cancellations </td><td>{data["cancel_code"].count()}</td></tr>
         <tr><td>Total number of cancellations </td><td>{data["cancellation_id"].count()}</td></tr>
-        <tr><td>Average delay</td><td>{data["arrival_lateness"].mean()}</td></tr>
+        <tr><td>Average delay (minutes)</td><td>{data["arrival_lateness"].mean()}</td></tr>
         </table>
         <h3><center>Total services per station</center></h3>
         <p> {total_services_html} </p>
@@ -326,6 +331,8 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
     </body>
     </html>
     """
+    with open("testing.html", "w") as f:
+        f.write(html_content)
     return html_content
 
 
