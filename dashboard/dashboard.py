@@ -101,14 +101,16 @@ def get_live_database(conn: connection) -> pd.DataFrame:
         """
 
     with conn.cursor() as cur:
-        #cur.execute(query, (yesterday_date,))
-        cur.execute(query, ('2023-09-07',))
+        cur.execute(query, (yesterday_date,))
+        # cur.execute(query, ('2023-09-07',))
         data = cur.fetchall()
 
     data_df = pd.DataFrame(data, columns=CSV_COLUMNS)
     data_df.to_csv("database_df.csv")
 
     return data_df
+
+
 
 
 def dashboard_header(page) -> None:
@@ -163,34 +165,74 @@ def first_row_display(data_df: pd.DataFrame) -> None:
                   ({percentage_cancellations:.2f}%)")
 
 
+# def second_row_display(data_df: pd.DataFrame) -> None:
+#     """Controls how the second row figures are displayed for the overall data."""
+
+#     most_cancelled_station = data_df['origin_station_name'].value_counts(
+#     ).idxmax()
+
+#     cols = st.columns(3)
+#     st.markdown(
+#         """
+#         <style>
+#             [data-testid="stMetricValue"] {
+#             font-size: 25px;
+#             }
+#         </style>
+#         """,
+#         unsafe_allow_html=True,
+#     )
+
+    
+#     with cols[0]:
+#         most_cancelled_station = data_df['origin_station_name'].value_counts(
+#         ).idxmax()
+#         num_cancellations = data_df.loc[data_df['arrival_lateness'].idxmax(
+#         )]['origin_station_name']
+#         st.write("MOST DELAYED STATION:",
+#                  data_df.loc[data_df['arrival_lateness'].idxmax()]['origin_station_name'])
+
+#     with cols[1]:
+#         most_cancelled_station = data_df['origin_station_name'].value_counts(
+#         ).idxmax()
+#         num_cancellations = data_df['origin_station_name'].value_counts().max()
+#         st.write("MOST CANCELLED STATION:",
+#                  f"{most_cancelled_station} (Num of cancellations: {num_cancellations})")
+
+#     with cols[2]:
+#         avg_delay_minutes = round(data_df['arrival_lateness'].mean(), 2)
+#         st.metric("AVG DELAYS TIME FOR ALL SERVICES:",
+#                   f"{avg_delay_minutes} MINUTES")
+
+#     st.markdown("---")
+
 def second_row_display(data_df: pd.DataFrame) -> None:
     """Controls how the second row figures are displayed for the overall data."""
 
-    most_cancelled_station = data_df['origin_station_name'].value_counts(
-    ).idxmax()
+    most_cancelled_station = data_df['origin_station_name'].value_counts().idxmax()
 
     cols = st.columns(3)
+
+    # Apply custom CSS style to change font size for st.metric elements
     st.markdown(
         """
         <style>
-            [data-testid="stMetricValue"] {
-            font-size: 25px;
+            .st.metric {
+                font-size: 25px;
             }
         </style>
         """,
         unsafe_allow_html=True,
     )
+
     with cols[0]:
-        most_cancelled_station = data_df['origin_station_name'].value_counts(
-        ).idxmax()
-        num_cancellations = data_df.loc[data_df['arrival_lateness'].idxmax(
-        )]['origin_station_name']
+        most_cancelled_station = data_df['origin_station_name'].value_counts().idxmax()
+        num_cancellations = data_df.loc[data_df['arrival_lateness'].idxmax()]['origin_station_name']
         st.write("MOST DELAYED STATION:",
                  data_df.loc[data_df['arrival_lateness'].idxmax()]['origin_station_name'])
 
     with cols[1]:
-        most_cancelled_station = data_df['origin_station_name'].value_counts(
-        ).idxmax()
+        most_cancelled_station = data_df['origin_station_name'].value_counts().idxmax()
         num_cancellations = data_df['origin_station_name'].value_counts().max()
         st.write("MOST CANCELLED STATION:",
                  f"{most_cancelled_station} (Num of cancellations: {num_cancellations})")
@@ -201,6 +243,7 @@ def second_row_display(data_df: pd.DataFrame) -> None:
                   f"{avg_delay_minutes} MINUTES")
 
     st.markdown("---")
+
 
 
 def plot_average_delays_by_station(data_df: pd.DataFrame, selected_station) -> None:
