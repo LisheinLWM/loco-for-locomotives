@@ -172,7 +172,6 @@ def run_extract(authentication_realtime):
     yesterday = datetime.now()-timedelta(days=1)
     yesterday_date = yesterday.strftime("%Y/%m/%d")
 
-    yesterday_date = "2023/09/08"
     start_time = time.time()
     print(f"Extracting data for {yesterday_date}")
 
