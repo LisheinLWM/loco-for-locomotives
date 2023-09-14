@@ -531,7 +531,7 @@ def sidebar_header(text, color='white') -> None:
 def plot_most_average_delays_by_company(data_df: pd.DataFrame, selected_company) -> None:
     """Create a horizontal bar chart showing the average delays for each company."""
 
-    st.write('<h2 style="font-size: 24px;">Companies ranked from worse to best by their avg delays</h2>',
+    st.write('<h2 style="font-size: 24px;">Average delays for each company.</h2>',
              unsafe_allow_html=True)
 
     max_companies = 20
@@ -551,9 +551,7 @@ def plot_most_average_delays_by_company(data_df: pd.DataFrame, selected_company)
     average_delays = average_delays.sort_values(by='arrival_lateness',
                                                 ascending=False).head(max_companies)
 
-    chart = alt.Chart(average_delays).mark_bar(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(average_delays).mark_bar().encode(
         y=alt.Y('company_name:N', title='COMPANY NAME',
                 sort=alt.EncodingSortField(field='arrival_lateness', order='descending')),
         x=alt.X('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)'),
@@ -561,7 +559,7 @@ def plot_most_average_delays_by_company(data_df: pd.DataFrame, selected_company)
                  alt.Tooltip('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)')]
     ).properties(
         width=600,
-        height=500
+        height=400
     ).configure_axis(
         labelAngle=0,
         labelColor="#1f5475",
@@ -608,27 +606,23 @@ def plot_arrival_lateness_over_time_by_company(data_df: pd.DataFrame) -> None:
 #     st.altair_chart(chart, use_container_width=True)
 
 def plot_cancellations_by_company(data_df: pd.DataFrame):
-    """Create a bar chart to compare the frequency of cancellations by company."""
+    """Create a bar chart to compare the frequency of cancellations per company."""
 
-    st.write('<h2 style="font-size: 24px;">Companies ranked from worse to best by their cancellations</h2>',
+    st.write('<h2 style="font-size: 24px;">Frequency of cancellations per company</h2>',
              unsafe_allow_html=True)
 
     # Group data by company and count the number of cancellations
     cancellation_counts = data_df.groupby('company_name')['cancel_code'].count().reset_index()
     cancellation_counts.columns = ['company_name', 'cancellation_count']
 
-    # Sort companies by cancellation count in descending order
     cancellation_counts = cancellation_counts.sort_values(by='cancellation_count', ascending=False)
 
-    # Create the bar chart
-    chart = alt.Chart(cancellation_counts).mark_bar(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(cancellation_counts).mark_bar().encode(
         x=alt.X('cancellation_count:Q', title='Cancellation Count'),
         y=alt.Y('company_name:N', title='Company Name', sort='-x'),  # Sort in descending order
         tooltip=['company_name:N', 'cancellation_count:Q']  # Include tooltips
     ).properties(
-        width=800,
+        width=600,
         height=400
     ).configure_axis(
         labelColor="#1f5475",
@@ -638,37 +632,37 @@ def plot_cancellations_by_company(data_df: pd.DataFrame):
     st.altair_chart(chart, use_container_width=True)
 
 
-def plot_cancellation_reasons_by_company(data_df: pd.DataFrame):
-    """Create a pie chart to visualize the distribution of cancellation reasons by company."""
+# def plot_cancellation_reasons_by_company(data_df: pd.DataFrame):
+#     """Create a pie chart to visualize the distribution of cancellation reasons by company."""
 
-    st.write('<h2 style="font-size: 24px;">Pie Chart of Cancellation Reasons by Company</h2>',
-             unsafe_allow_html=True)
+#     st.write('<h2 style="font-size: 24px;">Pie Chart of Cancellation Reasons by Company</h2>',
+#              unsafe_allow_html=True)
 
-    # Group data by company and cancellation reason, and count the number of cancellations for each reason
-    cancellation_reason_counts = data_df.groupby(['company_name', 'cancel_reason'])['cancel_code'].count().reset_index()
-    cancellation_reason_counts.columns = ['company_name', 'cancel_reason', 'cancellation_count']
+#     # Group data by company and cancellation reason, and count the number of cancellations for each reason
+#     cancellation_reason_counts = data_df.groupby(['company_name', 'cancel_reason'])['cancel_code'].count().reset_index()
+#     cancellation_reason_counts.columns = ['company_name', 'cancel_reason', 'cancellation_count']
 
-    cancellation_reason_counts = cancellation_reason_counts.sort_values(by='cancellation_count', ascending=False)
+#     cancellation_reason_counts = cancellation_reason_counts.sort_values(by='cancellation_count', ascending=False)
 
-    chart = alt.Chart(cancellation_reason_counts).mark_arc().encode(
-        color=alt.Color('cancel_reason:N', title='Cancellation Reason'),
-        tooltip=['company_name:N', 'cancel_reason:N', 'cancellation_count:Q'],
-        theta=alt.Theta('cancellation_count:Q', title='Cancellation Count'),
-        text='cancel_reason:N'  # Display cancellation reasons as labels
-    ).properties(
-        width=600,
-        height=400
-    ).configure_text(
-        color="#1f5475"
-    )
+#     chart = alt.Chart(cancellation_reason_counts).mark_arc().encode(
+#         color=alt.Color('cancel_reason:N', title='Cancellation Reason'),
+#         tooltip=['company_name:N', 'cancel_reason:N', 'cancellation_count:Q'],
+#         theta=alt.Theta('cancellation_count:Q', title='Cancellation Count'),
+#         text='cancel_reason:N'  # Display cancellation reasons as labels
+#     ).properties(
+#         width=600,
+#         height=400
+#     ).configure_text(
+#         color="#1f5475"
+#     )
 
-    st.altair_chart(chart, use_container_width=True)
+#     st.altair_chart(chart, use_container_width=True)
 
 
 def plot_percentage_of_services_reaching_final_destination_by_company(data_df: pd.DataFrame):
     """Create a pie chart to visualize the percentage of services reaching their planned final destination by company."""
 
-    st.write('<h2 style="font-size: 24px;">Pie Chart of Services Reaching Final Destination by Company</h2>',
+    st.write('<h2 style="font-size: 24px;">Final destination reached services per company</h2>',
              unsafe_allow_html=True)
 
     # Filter services that reached their final destination
@@ -700,45 +694,45 @@ def plot_percentage_of_services_reaching_final_destination_by_company(data_df: p
     st.altair_chart(chart, use_container_width=True)
 
 
-def plot_percentage_of_services_not_reaching_final_destination_by_company(data_df: pd.DataFrame):
-    """Create a pie chart to visualize the percentage of services not reaching their planned final destination by company."""
+# def plot_percentage_of_services_not_reaching_final_destination_by_company(data_df: pd.DataFrame):
+#     """Create a pie chart to visualize the percentage of services not reaching their planned final destination by company."""
 
-    st.write('<h2 style="font-size: 24px;">Pie Chart of Services Not Reaching Final Destination by Company</h2>',
-             unsafe_allow_html=True)
+#     st.write('<h2 style="font-size: 24px;">Pie Chart of Services Not Reaching Final Destination by Company</h2>',
+#              unsafe_allow_html=True)
 
-    # Filter services that did not reach their final destination
-    services_not_reached_destination = data_df[data_df['destination_station_id'] != data_df['reached_station_id']]
+#     # Filter services that did not reach their final destination
+#     services_not_reached_destination = data_df[data_df['destination_station_id'] != data_df['reached_station_id']]
 
-    # Group data by company and calculate the percentage of services that did not reach their final destination
-    company_summary = services_not_reached_destination.groupby('company_name').size().reset_index(name='not_reached_destination_count')
-    total_services = data_df.groupby('company_name').size().reset_index(name='total_services')
-    company_summary = company_summary.merge(total_services, on='company_name', how='outer')
-    company_summary['percentage_not_reached_destination'] = (company_summary['not_reached_destination_count'] / company_summary['total_services']) * 100
+#     # Group data by company and calculate the percentage of services that did not reach their final destination
+#     company_summary = services_not_reached_destination.groupby('company_name').size().reset_index(name='not_reached_destination_count')
+#     total_services = data_df.groupby('company_name').size().reset_index(name='total_services')
+#     company_summary = company_summary.merge(total_services, on='company_name', how='outer')
+#     company_summary['percentage_not_reached_destination'] = (company_summary['not_reached_destination_count'] / company_summary['total_services']) * 100
 
-    company_summary = company_summary.sort_values(by='percentage_not_reached_destination', ascending=False)
+#     company_summary = company_summary.sort_values(by='percentage_not_reached_destination', ascending=False)
 
-    chart = alt.Chart(company_summary).mark_arc().encode(
-        color=alt.Color('company_name:N', title='Company Name'),
-        tooltip=[
-            alt.Tooltip('company_name:N', title='Company Name'),
-            alt.Tooltip('percentage_not_reached_destination:Q', title='Percentage Not Reached Destination', format='.2f')
-        ],
-        theta=alt.Theta('percentage_not_reached_destination:Q', title='Percentage Not Reached Destination'),
-        text='company_name:N'  # Display company names as labels
-    ).properties(
-        width=600,
-        height=400
-    ).configure_text(
-        color="#1f5475"
-    )
+#     chart = alt.Chart(company_summary).mark_arc().encode(
+#         color=alt.Color('company_name:N', title='Company Name'),
+#         tooltip=[
+#             alt.Tooltip('company_name:N', title='Company Name'),
+#             alt.Tooltip('percentage_not_reached_destination:Q', title='Percentage Not Reached Destination', format='.2f')
+#         ],
+#         theta=alt.Theta('percentage_not_reached_destination:Q', title='Percentage Not Reached Destination'),
+#         text='company_name:N'  # Display company names as labels
+#     ).properties(
+#         width=600,
+#         height=400
+#     ).configure_text(
+#         color="#1f5475"
+#     )
 
-    st.altair_chart(chart, use_container_width=True)
+#     st.altair_chart(chart, use_container_width=True)
 
 
 def plot_cancellations_by_company_and_reason(data_df: pd.DataFrame):
     """Create a stacked bar chart to visualize cancellations by company and reason."""
 
-    st.write('<h2 style="font-size: 24px;">Stacked Bar Chart of Cancellations by Company and Reason</h2>',
+    st.write('<h2 style="font-size: 24px;">Cancellations and reasons per company</h2>',
              unsafe_allow_html=True)
 
     # Filter rows with cancellations
@@ -759,6 +753,7 @@ def plot_cancellations_by_company_and_reason(data_df: pd.DataFrame):
         width=2000,
         height=400
     ).configure_axis(
+        labelAngle=180,
         labelColor="#1f5475",
         titleColor="#1f5475"
     )
@@ -826,11 +821,8 @@ if __name__ == "__main__":
         
         #create_arrival_lateness_line_chart_of_company_by_hour(database_df, select_companies)
         plot_cancellations_by_company_and_reason(database_df)
-        plot_cancellation_reasons_by_company(database_df)
+
         col1, col2 = st.columns(2)
 
-        with col1:
-            plot_percentage_of_services_reaching_final_destination_by_company(database_df)
-        with col2:
-            plot_percentage_of_services_not_reaching_final_destination_by_company(database_df)
+        plot_percentage_of_services_reaching_final_destination_by_company(database_df)
         #plot_arrival_lateness_over_time_by_company(database_df)
