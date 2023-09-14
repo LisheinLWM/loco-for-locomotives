@@ -370,7 +370,7 @@ def upload_to_s3_bucket(file_name):
 
     amazon_s3.upload_file(
         f'/tmp/{file_name}',
-        'c8-loco-test',
+        'disruption-detect-daily-reports',
         f'{file_name}')
 
 
@@ -379,7 +379,9 @@ def lambda_handler(event=None, context=None) -> dict:
     connection = get_db_connection()
     data_df = get_data_from_database(connection)
     create_report(data_df)
-    # upload_to_s3_bucket('test.pdf')
+    yesterday = datetime.now() - timedelta(days=1)
+    yesterday_date = yesterday.strftime("%d-%m-%Y")
+    upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
 
     return {
         "statusCode": 200,
