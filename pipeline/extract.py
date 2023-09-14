@@ -173,7 +173,7 @@ def run_extract(authentication_realtime):
     yesterday_date = yesterday.strftime("%Y/%m/%d")
 
     start_time = time.time()
-    print("Extracting...")
+    print(f"Extracting data for {yesterday_date}")
 
     create_download_folders()
 

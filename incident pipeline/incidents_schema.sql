@@ -29,7 +29,6 @@ CREATE TABLE IF NOT EXISTS incident (
     end_time TIMESTAMP,
     PRIMARY KEY (incident_id),
     FOREIGN KEY (priority_id) REFERENCES priority(priority_id),
-    FOREIGN KEY (operator_id) REFERENCES operator(operator_id)
 );
 
 CREATE TABLE IF NOT EXISTS route_affected (
