@@ -3,6 +3,7 @@ from os import _Environ
 
 import streamlit as st
 import boto3
+from datetime import datetime
 from boto3 import client
 from boto3.resources.base import ServiceResource
 from dotenv import load_dotenv
@@ -47,10 +48,24 @@ def generate_sns_client(environ: _Environ) -> ServiceResource:
         print("Error generating SNS client.")
 
 
-def display_headline_figures(incident_df):
+def display_headline_figures(incident_df: DataFrame):
 
-    pass
-
+    col1, col2, col3 = st.columns(3)
+    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
+    incident_df = incident_df.loc[idx]
+    with col1:
+        st.metric(f"TOTAL INCIDENTS", incident_df.shape[0])
+    with col2:
+        current_time = datetime.now()
+        incident_df["start_time"] = pd.to_datetime(incident_df['start_time'])
+        incident_df['end_time'] = pd.to_datetime(incident_df['end_time'])
+        current_incidents = incident_df[(incident_df['start_time'] <= current_time) & 
+                                        ((current_time <= incident_df['end_time']) |
+                                         incident_df['end_time'].isna())]
+        st.metric("ACTIVE INCIDENTS ", len(current_incidents))
+    with col3:
+        pass
+    
 
 def display_most_recent_incident(conn):
 
@@ -107,7 +122,6 @@ def display_most_recent_incident(conn):
     idx = data.groupby('Incident Number')['incident_version'].idxmax()
     data = data.loc[idx]
 
-
     st.write("MOST RECENT INCIDENTS:")
     st.markdown("""<style>
             thead tr th:first-child {display:none}
@@ -132,7 +146,8 @@ def calculate_total_subscriptions(sns_client: ServiceResource, operator_list: li
     return count
 
 
-def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: list[str]):
+def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: list[str],
+                                    incident_df: DataFrame):
 
     code = st.selectbox('SELECT OPERATOR TO VIEW METRICS FOR', options=operator_list)
     col1, col2, col3 = st.columns(3)
@@ -141,6 +156,10 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
                   calculate_total_subscriptions(sns_client, operator_list))
     with col2:
         st.metric(f"{code} SUBSCRIBER COUNT", get_subscription_count(sns_client, code))
+    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
+    incident_df = incident_df.loc[idx]
+    with col3:
+        st.metric(f"{code} TOTAL INCIDENTS", len(incident_df[incident_df["operator_code"] == code]))
         
 
 def create_incident_subscription_form(operator_list: list[str]):
@@ -225,6 +244,7 @@ if __name__ == "__main__":
     incident_df = retrieve_incident_data_as_dataframe(conn)
 
     print(list(incident_df.columns.values))
+    print(incident_df.info)
 
     sns_client = generate_sns_client(environ)
     
@@ -234,11 +254,15 @@ if __name__ == "__main__":
                     'SR', 'SE', 'TP', 'AW', 'LM', 'GX',
                     'GN', 'SN', 'TL', 'SW', 'IL']
 
-    st.title("DISRUPTION DETECT")
+    st.title("DISRUPTION DETECT: INCIDENTS")
 
     st.divider()
 
-    show_metrics_for_given_operator(sns_client, operator_list)
+    display_headline_figures(incident_df)
+
+    st.divider()
+
+    show_metrics_for_given_operator(sns_client, operator_list, incident_df)
 
     st.divider()
 
