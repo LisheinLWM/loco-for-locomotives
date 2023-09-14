@@ -72,7 +72,7 @@ class StompClient(stomp.ConnectionListener):
         logging.warning(
             'Disconnected - waiting %s seconds before exiting' % RECONNECT_DELAY_SECS)
         time.sleep(RECONNECT_DELAY_SECS)
-        connect_and_subscribe(self.conn)
+        connect_and_subscribe(self.conn, USERNAME, PASSWORD, CLIENT_ID, TOPIC)
 
     def on_connecting(self, host_and_port):
         logging.info('Connecting to ' + host_and_port[0])

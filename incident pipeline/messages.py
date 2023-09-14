@@ -25,7 +25,9 @@ def send_incident_notification(message_data: dict, sns: ServiceResource):
             text_msg = f"\n\n\U0001F684 {operator_name} incident \U0001F684:"
             text_msg += f"\n\nSummary: {summary}"
             text_msg += f"\n\nPriority: {priority}"
-            text_msg += f"\n\nRoutes affected: {routes_affected}"
+            text_msg += f"\n\nRoutes affected:"
+            for route in routes_affected:
+                text_msg += f"- {route}"
             if start_time and end_time:
                 text_msg += f"\n\nDuration: {start_time} to {end_time}"
             elif start_time:
