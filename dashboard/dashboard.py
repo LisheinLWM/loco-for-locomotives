@@ -893,4 +893,4 @@ if __name__ == "__main__":
             plot_percentage_of_services_reaching_final_destination_by_company(database_df)
         with col2:
             plot_percentage_of_services_not_reaching_final_destination_by_company(database_df)
-        plot_arrival_lateness_over_time_by_company(database_df)
+        #plot_arrival_lateness_over_time_by_company(database_df)
