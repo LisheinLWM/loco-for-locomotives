@@ -116,21 +116,18 @@ def get_live_database(conn: connection) -> pd.DataFrame:
 def dashboard_header(page) -> None:
     """Creates a header for the dashboard and title on tab."""
 
-    col1, col2, col3 = st.columns([6, 2, 6])
+    col1, col2, col3 = st.columns([6, 1, 1])
 
     with col1:
-        st.image("logo.png")
+        st.title(f'{page} VISUALISATION PAGE')
 
     with col2:
-        st.title(f'{page} VISUALISATION PAGE')
+        st.title('')
 
     with col3:
         st.title('')
-
-    st.markdown(
-        '<div style="display: flex; justify-content: center;">An app for analysing your train services.</div>',
-        unsafe_allow_html=True,
-    )
+    
+    st.write('An app for analysing your train services.')
 
     st.markdown("---")
 
@@ -247,8 +244,8 @@ def second_row_display(data_df: pd.DataFrame) -> None:
 
 
 def plot_average_delays_by_station(data_df: pd.DataFrame, selected_station) -> None:
-    """Create a horizontal bar chart showing the average delays for each station."""
-    st.write('<h2 style="font-size: 24px;">Top 20 station according to avg delays</h2>',
+    """Create a horizontal bar chart showing the average delays per station."""
+    st.write('<h2 style="font-size: 24px;">Average delays per station</h2>',
              unsafe_allow_html=True)
 
     max_stations = 20
@@ -268,9 +265,7 @@ def plot_average_delays_by_station(data_df: pd.DataFrame, selected_station) -> N
     average_delays = average_delays.sort_values(by='arrival_lateness',
                                                 ascending=False).head(max_stations)
 
-    chart = alt.Chart(average_delays).mark_bar(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(average_delays).mark_bar().encode(
         y=alt.Y('origin_station_name:N', title='STATION NAME',
                 sort=alt.EncodingSortField(field='arrival_lateness', order='descending')),
         x=alt.X('arrival_lateness:Q', title='AVERAGE DELAY (MINUTES)'),
@@ -290,7 +285,7 @@ def plot_average_delays_by_station(data_df: pd.DataFrame, selected_station) -> N
 def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> None:
     """Create a line graph showing the number of cancellations per station."""
 
-    st.write('<h2 style="font-size: 24px;">A line graph for number of cancellations by station</h2>',
+    st.write('<h2 style="font-size: 24px;"> Number of cancellations per station</h2>',
              unsafe_allow_html=True)
 
     max_stations = 20
@@ -313,9 +308,7 @@ def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> N
     cancellations_per_station = cancellations_per_station.sort_values(
         by='cancellation_count', ascending=False).head(20)
 
-    chart = alt.Chart(cancellations_per_station).mark_line(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(cancellations_per_station).mark_line().encode(
         x=alt.X('origin_station_name:N', title='STATION NAME'),
         y=alt.Y('cancellation_count:Q', title='NUMBER OF CANCELLATIONS'),
         tooltip=[alt.Tooltip('origin_station_name:N', title='STATION NAME'),
@@ -335,7 +328,7 @@ def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> N
 def plot_bus_replacements_per_station(data_df: pd.DataFrame, selected_station) -> None:
     """Create a donut Altair chart showing the number of bus replacements per station."""
 
-    st.write('<h2 style="font-size: 24px;">Number of Bus Replacements per Station</h2>',
+    st.write('<h2 style="font-size: 24px;">Number of bus replacements per station</h2>',
              unsafe_allow_html=True)
 
     max_stations = 20
@@ -401,7 +394,7 @@ def plot_bus_replacements_per_station(data_df: pd.DataFrame, selected_station) -
 def plot_percentage_of_services_reaching_final_destination(data_df: pd.DataFrame, selected_station) -> None:
     """Create a pie chart showing the percentage of services that reach their planned final destination per station."""
 
-    st.write('<h2 style="font-size: 24px;">Percentage of Services Reaching Final Destination by Station</h2>',
+    st.write('<h2 style="font-size: 24px;">Services that reach their planned final destination per station</h2>',
              unsafe_allow_html=True)
 
     max_stations = 20
@@ -449,61 +442,10 @@ def plot_percentage_of_services_reaching_final_destination(data_df: pd.DataFrame
     st.altair_chart(chart, use_container_width=True)
 
 
-def plot_percentage_of_services_not_reaching_final_destination(data_df: pd.DataFrame, selected_station) -> None:
-    """Create a pie chart showing the percentage of services that did not reach their planned final destination per station."""
-
-    st.write('<h2 style="font-size: 24px;">Percentage of Services Not Reaching Final Destination by Station</h2>',
-             unsafe_allow_html=True)
-
-    max_stations = 20
-
-    if len(selected_station) > max_stations:
-        st.error(
-            f"You have reached the maximum limit of {max_stations} stations in display. Please remove a station to add more.")
-        selected_station = selected_station[:max_stations]  # Truncate the list
-
-    if len(selected_station) != 0:
-        data_df = data_df[data_df['origin_station_name'].isin(
-            selected_station)]
-
-    # Calculate the percentage of services not reaching their planned final destination for each station
-    services_not_reaching_final_destination = data_df[data_df['destination_station_id']
-                                                      != data_df['reached_station_id']]
-    station_summary = services_not_reaching_final_destination.groupby(
-        'origin_station_name').size().reset_index(name='not_reached_destination_count')
-    total_services = data_df.groupby(
-        'origin_station_name').size().reset_index(name='total_services')
-    station_summary = station_summary.merge(
-        total_services, on='origin_station_name', how='outer')
-    station_summary['percentage_not_reached_destination'] = (
-        station_summary['not_reached_destination_count'] / station_summary['total_services']) * 100
-    station_summary = station_summary.sort_values(
-        by='percentage_not_reached_destination', ascending=False).head(20)
-
-    chart = alt.Chart(station_summary).mark_arc().encode(
-        color=alt.Color('origin_station_name:N',
-                        scale=alt.Scale(scheme='category20c')),
-        tooltip=[
-            alt.Tooltip('origin_station_name:N', title='STATION NAME'),
-            alt.Tooltip('percentage_not_reached_destination:Q',
-                        title='PERCENTAGE', format='.2f')
-        ],
-        theta=alt.Theta('percentage_not_reached_destination:Q', title=None),
-        text='origin_station_name:N'  # Display station names as labels
-    ).properties(
-        width=600,
-        height=400
-    ).configure_text(
-        color="#1f5475"
-    )
-
-    st.altair_chart(chart, use_container_width=True)
-
-
 def create_scatter_plot_arrival_lateness_vs_scheduled(data_df: pd.DataFrame) -> None:
     """Create a scatter plot of Arrival Lateness vs. Scheduled Arrival."""
     
-    st.write('<h2 style="font-size: 24px;">Scatter Plot of Arrival Lateness vs. Scheduled Arrival</h2>', unsafe_allow_html=True)
+    st.write('<h2 style="font-size: 24px;">Scatter plot of arrival lateness vs scheduled arrival</h2>', unsafe_allow_html=True)
 
     chart = alt.Chart(data_df).mark_circle().encode(
         x=alt.X('scheduled_arrival:T', title='Scheduled Arrival'),
@@ -526,16 +468,14 @@ def create_scatter_plot_arrival_lateness_vs_scheduled(data_df: pd.DataFrame) -> 
 
 def create_arrival_lateness_line_chart_by_hour(data_df: pd.DataFrame) -> None:
     """Create a line chart to visualize the trend of arrival lateness by hour for previous day """
-    st.write('<h2 style="font-size: 24px;">Line chart showing the trend of arrival lateness by hour.</h2>',
+    st.write('<h2 style="font-size: 24px;">Line chart showing the trend of arrival lateness by hour</h2>',
              unsafe_allow_html=True)
 
     yesterday = datetime.now() - timedelta(days=1
                                            )
     yesterday_date = yesterday.strftime("%Y-%m-%d")
 
-    chart = alt.Chart(data_df).mark_line(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(data_df).mark_line().encode(
         x=alt.X('run_date:T', title=f'Date:{yesterday_date}'),
         y=alt.Y('arrival_lateness:Q', title='Arrival Lateness'),
     ).properties(
@@ -548,8 +488,7 @@ def create_arrival_lateness_line_chart_by_hour(data_df: pd.DataFrame) -> None:
 def plot_cancel_codes_frequency_with_reasons(data_df):
     """Create a bar chart to visualize the frequency of different cancellation codes."""
 
-    st.write("""<h2 style="font-size: 24px;"> Top 20 highest frequency of cancellation codes 
-             with reasons(on hover)</h2>""",
+    st.write("""<h2 style="font-size: 24px;"> Frequency of cancellation codes with reasons</h2>""",
              unsafe_allow_html=True)
 
     data_df['cancel_reason'].fillna('None filled out', inplace=True)
@@ -566,9 +505,7 @@ def plot_cancel_codes_frequency_with_reasons(data_df):
 
     merged_df = merged_df.sort_values(by='frequency', ascending=False).head(20)
 
-    chart = alt.Chart(merged_df).mark_bar(
-        color="#ffc05f"
-    ).encode(
+    chart = alt.Chart(merged_df).mark_bar().encode(
         x=alt.X('cancel_code:N', title='Cancellation Code', sort=alt.EncodingSortField(
             field='bus_replacement_count', order='descending')),
         y=alt.Y('frequency:Q', title='Frequency'),
@@ -838,6 +775,9 @@ if __name__ == "__main__":
 
     st.set_page_config(
         page_title="Train Services Monitoring Dashboard", layout="wide")
+   
+    
+    st.sidebar.image("logo.png", use_column_width=True)
 
     sidebar_header("FILTER OPTIONS:")
     sidebar_header("SELECT A PAGE")
@@ -856,15 +796,15 @@ if __name__ == "__main__":
 
         plot_average_delays_by_station(database_df, select_station)
         plot_cancellations_per_station(database_df, select_station)
-        plot_bus_replacements_per_station(database_df, select_station)
 
         col1, col2 = st.columns(2)
 
         with col1:
-            plot_percentage_of_services_reaching_final_destination(database_df, select_station)
+            plot_bus_replacements_per_station(database_df, select_station)
         
         with col2:
-            plot_percentage_of_services_not_reaching_final_destination(database_df, select_station)
+            plot_percentage_of_services_reaching_final_destination(database_df, select_station)
+            
         
         create_scatter_plot_arrival_lateness_vs_scheduled(database_df)
         create_arrival_lateness_line_chart_by_hour(database_df)
