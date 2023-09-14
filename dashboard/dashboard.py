@@ -281,6 +281,7 @@ def plot_average_delays_by_station(data_df: pd.DataFrame, selected_station) -> N
         titleColor="#1f5475"
     )
     st.altair_chart(chart, use_container_width=True)
+    st.markdown("---")
 
 
 def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> None:
@@ -324,6 +325,7 @@ def plot_cancellations_per_station(data_df: pd.DataFrame, selected_station) -> N
     )
 
     st.altair_chart(chart, use_container_width=True)
+    st.markdown("---")
 
 
 def plot_bus_replacements_per_station(data_df: pd.DataFrame, selected_station) -> None:
@@ -445,7 +447,7 @@ def plot_percentage_of_services_reaching_final_destination(data_df: pd.DataFrame
 
 def create_scatter_plot_arrival_lateness_vs_scheduled(data_df: pd.DataFrame) -> None:
     """Create a scatter plot of Arrival Lateness vs. Scheduled Arrival."""
-    
+
     st.write('<h2 style="font-size: 24px;">Scatter plot of arrival lateness vs scheduled arrival</h2>', unsafe_allow_html=True)
 
     chart = alt.Chart(data_df).mark_circle().encode(
@@ -465,11 +467,13 @@ def create_scatter_plot_arrival_lateness_vs_scheduled(data_df: pd.DataFrame) -> 
     )
 
     st.altair_chart(chart, use_container_width=True)
+    st.markdown("---")
 
 
 def create_arrival_lateness_line_chart_by_hour(data_df: pd.DataFrame) -> None:
     """Create a line chart to visualize the trend of arrival lateness by hour for previous day """
-    st.write('<h2 style="font-size: 24px;">Line chart showing the trend of arrival lateness by hour</h2>',
+    st.markdown("---")
+    st.write('<h2 style="font-size: 24px;">Arrival lateness by hour for previous day</h2>',
              unsafe_allow_html=True)
 
     yesterday = datetime.now() - timedelta(days=1
@@ -484,6 +488,7 @@ def create_arrival_lateness_line_chart_by_hour(data_df: pd.DataFrame) -> None:
         height=400
     )
     st.altair_chart(chart, use_container_width=True)
+    st.markdown("---")
 
 
 def plot_cancel_codes_frequency_with_reasons(data_df):
@@ -732,7 +737,7 @@ def plot_percentage_of_services_reaching_final_destination_by_company(data_df: p
 
 def plot_cancellations_by_company_and_reason(data_df: pd.DataFrame):
     """Create a stacked bar chart to visualize cancellations by company and reason."""
-
+    st.markdown("---")
     st.write('<h2 style="font-size: 24px;">Cancellations and reasons per company</h2>',
              unsafe_allow_html=True)
 
@@ -760,6 +765,8 @@ def plot_cancellations_by_company_and_reason(data_df: pd.DataFrame):
     )
 
     st.altair_chart(chart, use_container_width=True)
+    st.markdown("---")
+
 
 if __name__ == "__main__":
 
@@ -805,6 +812,7 @@ if __name__ == "__main__":
 
         plot_average_delays_by_station(database_df, select_station)
         plot_cancellations_per_station(database_df, select_station)
+        create_scatter_plot_arrival_lateness_vs_scheduled(database_df)
 
         col1, col2 = st.columns(2)
 
@@ -814,8 +822,6 @@ if __name__ == "__main__":
         with col2:
             plot_percentage_of_services_reaching_final_destination(database_df, select_station)
             
-        
-        create_scatter_plot_arrival_lateness_vs_scheduled(database_df)
         create_arrival_lateness_line_chart_by_hour(database_df)
         plot_cancel_codes_frequency_with_reasons(database_df)
 
