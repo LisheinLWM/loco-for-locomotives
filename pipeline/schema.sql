@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS service_type (
 
 CREATE TABLE IF NOT EXISTS service_details (
     service_details_id INT GENERATED ALWAYS AS IDENTITY,
-    service_uid TEXT NOT NULL UNIQUE,
+    service_uid TEXT NOT NULL,
     company_id INT NOT NULL,
     service_type_id INT NOT NULL,
     origin_station_id INT NOT NULL,
@@ -46,7 +46,8 @@ CREATE TABLE IF NOT EXISTS service_details (
     FOREIGN KEY (company_id) REFERENCES company(company_id),
     FOREIGN KEY (service_type_id) REFERENCES service_type(service_type_id),
     FOREIGN KEY (origin_station_id) REFERENCES station(station_id),
-    FOREIGN KEY (destination_station_id) REFERENCES station(station_id)
+    FOREIGN KEY (destination_station_id) REFERENCES station(station_id),
+    UNIQUE (service_uid, run_data)
 );
 
 CREATE TABLE IF NOT EXISTS delay_details (

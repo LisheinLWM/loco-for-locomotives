@@ -24,6 +24,7 @@ import socket
 import logging
 import xml.etree.ElementTree as ET
 
+import boto3
 from boto3 import client
 import pandas as pd
 import stomp
@@ -37,7 +38,7 @@ from load_incident_data import load_all_incidents
 from messages import send_incident_notification
 
 
-def connect_and_subscribe(connection):
+def connect_and_subscribe(connection, USERNAME, PASSWORD, CLIENT_ID, TOPIC):
     """insert docstring here"""
     if stomp.__version__[0] < 5:
         connection.start()
@@ -71,7 +72,7 @@ class StompClient(stomp.ConnectionListener):
         logging.warning(
             'Disconnected - waiting %s seconds before exiting' % RECONNECT_DELAY_SECS)
         time.sleep(RECONNECT_DELAY_SECS)
-        connect_and_subscribe(self.conn)
+        connect_and_subscribe(self.conn, USERNAME, PASSWORD, CLIENT_ID, TOPIC)
 
     def on_connecting(self, host_and_port):
         logging.info('Connecting to ' + host_and_port[0])
@@ -84,7 +85,7 @@ class StompClient(stomp.ConnectionListener):
             flattened_msg = flatten_incident_data(message_data)
             msg_df = pd.DataFrame(flattened_msg)
             load_all_incidents(msg_df)
-            print("loaded")
+            logging.info("Incident recorded.")
         except Exception as e:
             logging.error(str(e))
 
@@ -101,8 +102,9 @@ if __name__ == "__main__":
 
     s3 = client("s3", aws_access_key_id=os.environ["ACCESS_KEY_ID"],
                 aws_secret_access_key=os.environ["SECRET_ACCESS_KEY"])
-
-    sns = client("sns")
+    boto3.setup_default_session(region_name='eu-west-2')
+    sns = client("sns", aws_access_key_id=os.environ["ACCESS_KEY_ID"],
+                 aws_secret_access_key=os.environ["SECRET_ACCESS_KEY"])
 
     USERNAME = os.environ["USERNAME"]
     PASSWORD = os.environ["PASSWORD"]
@@ -133,7 +135,7 @@ if __name__ == "__main__":
     client = StompClient()
     client.conn = conn
     conn.set_listener('', client)
-    connect_and_subscribe(conn)
+    connect_and_subscribe(conn, USERNAME, PASSWORD, CLIENT_ID, TOPIC)
 
     while True:
         time.sleep(1)
