@@ -265,8 +265,8 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
             <table border="0" style="background-color: #B1D4E0">
             <tr>
             <td><img style="width: 50px; height: 50px; background: #B1D4E0";" src="logo.png" alt="Logo" /></td>
-            <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Daily report</h1></td>
-            <td><h3 align="right">{yesterday_date}</h3></td>
+            <td><h1 style="background-color: #B1D4E0; color: #345E7D"> Daily Report</h1></td>
+            <td><h1 style="background-color: #B1D4E0; color: #345E7D" align="center">{yesterday_date}</h1></td>
             </tr>
             </table>
             <br />
@@ -275,20 +275,20 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
             <table border="0">
             <tr>
             <td>
-            <h2>Cancellations per Station</h2>
+            <h2>Cancellations Per Station</h2>
             <img style="width: 250; height: 200" src="data:image/png;base64,{img}">
             </td>
             <td>
-            <h2>Cancellations per Company</h2>
+            <h2>Cancellations Per Company</h2>
             <img style="width: 250; height: 200" src="data:image/png;base64,{img2}"></td>
             </tr>
             </table>
             </div>
             <div>
-            <h2 align="center">Average Delays per Station</h2>
+            <h2 align="center">Average Delays Per Station</h2>
             <img style="width: 500; height: 200" src="data:image/png;base64,{img3}">
             </div><div>
-            <h2 align="center">Average Delays per Company</h2>
+            <h2 align="center">Average Delays Per Company</h2>
             <img style="width: 500; height: 200" src="data:image/png;base64,{img4}">
             </div>
             <br /><br /><br /><br />
@@ -296,22 +296,22 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
         <center>
         <h3>Key Statistics</h3>
         <table border="0.1">
-        <tr><td>Total number of services</td><td>{data["service_uid"].count()}</td></tr>
-        <tr><td>Total number of delays</td><td>{data["arrival_lateness"].count()}</td></tr>
-        <tr><td>Total number of cancellations </td><td>{data["cancellation_id"].count()}</td></tr>
-        <tr><td>Average delay (minutes)</td><td>{data["arrival_lateness"].mean()}</td></tr>
+        <tr><td>Total Number Of Services</td><td>{data["service_uid"].count()}</td></tr>
+        <tr><td>Total Number Of Delays</td><td>{data["arrival_lateness"].count()}</td></tr>
+        <tr><td>Total Number Of Cancellations </td><td>{data["cancellation_id"].count()}</td></tr>
+        <tr><td>Average Delay (minutes)</td><td>{data["arrival_lateness"].mean()}</td></tr>
         </table>
-        <h3><center>Total services per station</center></h3>
+        <h3><center>Total Services Per Station</center></h3>
         <p> {total_services_html} </p>
-        <h3><center>Average Delays per Company</center></h3>
+        <h3><center>Average Delays Per Company</center></h3>
         <p>{average_delays_html}</p>
-        <h3><center>Total Delays per Company</center></h3>
+        <h3><center>Total Delays Per Company</center></h3>
         <p>{company_html}</p>
-        <h3><center>Cancellations per Company</center></h3>
+        <h3><center>Cancellations Per Company</center></h3>
         <p>{cancellations}</p>
-        <h3><center>Delays per Station</center></h3>
+        <h3><center>Delays Per Station</center></h3>
         <p>{delays_station}</p>
-        <h3><center>Cancellations per Station</center></h3>
+        <h3><center>Cancellations Per Station</center></h3>
         <p>{cancellations_station}</p>
         </center>
     </body>
@@ -381,7 +381,7 @@ def lambda_handler(event=None, context=None) -> dict:
     create_report(data_df)
     yesterday = datetime.now() - timedelta(days=1)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
-    upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
+    # upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
 
     return {
         "statusCode": 200,

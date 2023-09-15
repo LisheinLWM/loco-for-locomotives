@@ -15,5 +15,5 @@ __pycache__
 *.ipynb
 *.html
 .DS_Store
-test.pdf
+*.pdf
 t*.png
