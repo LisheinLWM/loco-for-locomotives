@@ -1,30 +1,40 @@
+"""Streamlit dashboard file: used to build visualisations based on the incidents schema of the database"""
+
 from os import environ
 from os import _Environ
-
-import streamlit as st
-import boto3
 from datetime import datetime
+
+import altair as alt
 from boto3 import client
 from boto3.resources.base import ServiceResource
 from dotenv import load_dotenv
-import altair as alt
-from altair.vegalite.v5.api import Chart
-import pandas as pd
+import streamlit as st
 from pandas import DataFrame
 from psycopg2 import connect
 from psycopg2.extensions import connection
+import pandas as pd
+
 
 def subscribe_to_topic(sns: ServiceResource, phone_number: str,
                         operator_code: str) -> None:
+    """
+    Subscribes a provided phone number to the
+    chosen rail SNS topic
+    """
     print(f"Subscribing {phone_number}.")
-    sns.subscribe(TopicArn=f"arn:aws:sns:eu-west-2:129033205317:rail-incidents-{operator_code}",
-                  Protocol='sms',
-                  Endpoint=phone_number,
-                  ReturnSubscriptionArn=True)
+    try:
+        sns.subscribe(TopicArn=f"arn:aws:sns:eu-west-2:129033205317:rail-incidents-{operator_code}",
+                    Protocol='sms',
+                    Endpoint=phone_number,
+                    ReturnSubscriptionArn=True)
+    except:
+        print("Invalid selection.")
 
 
 def connect_to_db(environ: _Environ) -> connection:
-
+    """
+    Returns a connection to the database
+    """
     try:
         return connect(
             database=environ["DB_NAME"],
@@ -38,18 +48,22 @@ def connect_to_db(environ: _Environ) -> connection:
 
 
 def generate_sns_client(environ: _Environ) -> ServiceResource:
-
+    """
+    Returns an SNS client
+    """
     try:
         return client('sns', region_name=environ["AWS_REGION"],
                         aws_access_key_id=environ["ACCESS_KEY_ID"],
                         aws_secret_access_key=environ["SECRET_ACCESS_KEY"])
-    
     except:
         print("Error generating SNS client.")
 
 
 def display_headline_figures(incident_df: DataFrame):
-
+    """
+    Displays a number of headline figures, generated
+    from the given DataFrame, in columns
+    """
     col1, col2, col3, col4 = st.columns(4)
     idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
     incident_df = incident_df.loc[idx]
@@ -77,7 +91,11 @@ def display_headline_figures(incident_df: DataFrame):
 
 
 def display_most_recent_incident(conn):
-
+    """
+    Uses Streamlit to display a table of the most
+    recent incidents, pulled from the database with
+    an SQL query.
+    """
     with conn.cursor() as cur:
 
         query = """
@@ -140,7 +158,10 @@ def display_most_recent_incident(conn):
 
 
 def get_subscription_count(sns: ServiceResource, operator_code: str) -> int:
-
+    """
+    Returns the subscription count for the
+    specified SNS topic
+    """
     results = sns.list_subscriptions_by_topic(
     TopicArn=f"arn:aws:sns:eu-west-2:129033205317:rail-incidents-{operator_code}")
     print(results)
@@ -148,7 +169,10 @@ def get_subscription_count(sns: ServiceResource, operator_code: str) -> int:
 
 
 def calculate_total_subscriptions(sns_client: ServiceResource, operator_list: list[str]):
-
+    """
+    Returns the total number of subscriptions
+    to rail operator topics
+    """
     count = 0
     for operator in operator_list:
         count += get_subscription_count(sns_client, operator)
@@ -157,7 +181,12 @@ def calculate_total_subscriptions(sns_client: ServiceResource, operator_list: li
 
 def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: list[str],
                                     incident_df: DataFrame):
-
+    """
+    Displays specific statistics for the
+    specified operator
+    """
+    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
+    incident_df = incident_df.loc[idx]
     code = st.selectbox('SELECT OPERATOR TO VIEW METRICS FOR', options=operator_list)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -165,8 +194,6 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
                   calculate_total_subscriptions(sns_client, operator_list))
     with col2:
         st.metric(f"{code} SUBSCRIBER COUNT", get_subscription_count(sns_client, code))
-    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
-    incident_df = incident_df.loc[idx]
     with col3:
         st.metric(f"{code} TOTAL INCIDENTS", len(incident_df[incident_df["operator_code"] == code]))
     with col4:
@@ -177,8 +204,13 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
                                          incident_df['end_time'].isna())]
         st.metric(f"{code} ACTIVE INCIDENTS", len(current_incidents))
 
-def create_incident_subscription_form(operator_list: list[str]):
 
+def create_incident_subscription_form(operator_list: list[str]):
+    """
+    Creates a form which allows users to input
+    information and subscribe their number to
+    the relevant SNS topic    
+    """
     with st.form(clear_on_submit=True, key="subscribe_form"):
         st.subheader("SUBSCRIBE TO GET INCIDENT NOTIFICATIONS")
         phone_number = st.text_input("PHONE NUMBER (INCL. AREA CODE)")
@@ -190,7 +222,10 @@ def create_incident_subscription_form(operator_list: list[str]):
 
 
 def retrieve_incident_data_as_dataframe(conn: connection) -> DataFrame:
-
+    """
+    Connects to the RDS database, selects relevant
+    incident data, and returns it as a DataFrame
+    """
     with conn.cursor() as cur:
 
         query = """SELECT
@@ -240,7 +275,10 @@ def retrieve_incident_data_as_dataframe(conn: connection) -> DataFrame:
 
 
 def set_search_path(conn: connection) -> None:
-
+    """
+    Sets the search path of a Database connection
+    to 'incident_data'
+    """
     with conn.cursor() as cur:
 
         cur.execute("SET SEARCH_PATH TO incident_data;")
@@ -249,7 +287,11 @@ def set_search_path(conn: connection) -> None:
 
 
 def bar_graph_avg_incidents_per_day_per_operator(df: DataFrame) -> None:
-
+    """
+    Displays a graph which visualises the
+    average number of incidents per day
+    for each operator
+    """
     idx = df.groupby('incident_num')['incident_version'].idxmax()
     df = df.loc[idx]
     
@@ -272,7 +314,11 @@ def bar_graph_avg_incidents_per_day_per_operator(df: DataFrame) -> None:
 
 
 def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
-
+    """
+    Displays a graph which visualises the
+    average number of incidents per day
+    for each route
+    """
     df['start_time'] = pd.to_datetime(df['start_time'])
 
     route_avg_incidents = df.groupby(['route_name', df['start_time'].dt.date])['incident_id'].count().reset_index()
@@ -295,13 +341,8 @@ if __name__ == "__main__":
     load_dotenv()
 
     conn = connect_to_db(environ)
-
     set_search_path(conn)
-
     incident_df = retrieve_incident_data_as_dataframe(conn)
-
-    print(list(incident_df.columns.values))
-    print(incident_df.info)
 
     sns_client = generate_sns_client(environ)
     
@@ -312,31 +353,21 @@ if __name__ == "__main__":
                     'GN', 'SN', 'TL', 'SW', 'IL']
 
     st.title("DISRUPTION DETECT: INCIDENTS")
-
     st.divider()
-
     display_headline_figures(incident_df)
-
     st.divider()
-
     show_metrics_for_given_operator(sns_client, operator_list, incident_df)
-
     st.divider()
-
     create_incident_subscription_form(operator_list)
-
     st.divider()
-
     display_most_recent_incident(conn)
 
     st.divider()
-
     selected_operators = st.sidebar.multiselect("Operator", set(incident_df["operator_name"].unique().tolist()))
     operator_filtered_df = incident_df[incident_df['operator_name'].isin(selected_operators)]
     bar_graph_avg_incidents_per_day_per_operator(operator_filtered_df)
 
     st.divider()
-
     selected_routes = st.sidebar.multiselect("Route", set(incident_df["route_name"].unique().tolist()))
     route_filtered_df = incident_df[incident_df['route_name'].isin(selected_routes)]
     bar_graph_avg_incidents_per_day_per_route(route_filtered_df)

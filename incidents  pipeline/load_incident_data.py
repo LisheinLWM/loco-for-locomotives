@@ -1,3 +1,5 @@
+"""Load file: loads incident data into the database"""
+
 import os
 
 from dotenv import load_dotenv
@@ -12,8 +14,9 @@ from pandas import DataFrame
 
 
 def get_connection(host: str, db_name: str, password: str, user: str):
-    """Connects to the database"""
-
+    """
+    Connects to the database
+    """
     try:
         conn = psycopg2.connect(host=host,
                                 dbname=db_name,
@@ -26,8 +29,10 @@ def get_connection(host: str, db_name: str, password: str, user: str):
 
 
 def switch_between_schemas(conn, schema_name: str) -> None:
-    """Switches to the schema by the schema name provided"""
-
+    """
+    Switches to the schema by the 
+    schema name provided
+    """
     with conn.cursor() as cur:
         cur.execute("SET search_path TO %s", (schema_name,))
     conn.commit()
@@ -84,8 +89,10 @@ def seed_operator_table(conn: connection, operator_info: DataFrame):
 
 
 def load_priority(conn: connection, msg_df: DataFrame):
-    """Load data into the priority table from the incoming message."""
-
+    """
+    Load data into the priority table 
+    from the incoming message
+    """
     priority = msg_df[['incident_priority']].values.tolist()
 
     print(f"priorit {priority}")
@@ -96,7 +103,9 @@ def load_priority(conn: connection, msg_df: DataFrame):
 
 
 def load_incident(conn: connection, msg_df: DataFrame):
-
+    """
+    Loads incident data into the incident table
+    """
     data = msg_df[["incident_number", "version",
                    "info_link", "summary", "incident_priority", "planned", "creation_time",
                    "start_time", "end_time"]].values.tolist()
@@ -110,7 +119,9 @@ def load_incident(conn: connection, msg_df: DataFrame):
 
 
 def load_routes(conn: connection, msg_df: DataFrame):
-
+    """
+    Loads route data into the routes table
+    """
     routes = msg_df[["route_affected"]].values.tolist()
 
     with conn.cursor() as cur:
@@ -120,7 +131,11 @@ def load_routes(conn: connection, msg_df: DataFrame):
 
 
 def load_route_link(conn: connection, msg_df: DataFrame):
-
+    """
+    Creates links between incidents and
+    routes and loads them into the
+    incident_route_link table
+    """
     data = msg_df[["route_affected", "version"]].values.tolist()
 
     with conn.cursor() as cur:
@@ -131,7 +146,11 @@ def load_route_link(conn: connection, msg_df: DataFrame):
 
 
 def load_operator_link(conn: connection, msg_df: DataFrame):
-
+    """
+    Creates links between incidents and
+    operators and loads them into the
+    incident_operator_link table
+    """
     data = msg_df[["affected_operator_ref", "version"]].values.tolist()
 
     with conn.cursor() as cur:
@@ -142,7 +161,9 @@ def load_operator_link(conn: connection, msg_df: DataFrame):
 
 
 def load_all_incidents(msg):
-
+    """
+    Calls all of the load functions
+    """
     load_dotenv()
     conn = get_connection(os.environ["DB_HOST"], os.environ["DB_NAME"],
                           os.environ["DB_PASS"], os.environ["DB_USER"])

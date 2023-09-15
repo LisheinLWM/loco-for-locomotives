@@ -1,3 +1,5 @@
+"""Extract + Transform file: extracts and transforms incident data"""
+
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import Element
 from datetime import datetime

@@ -17,6 +17,8 @@ mccabe
 numpy
 packaging
 pandas
+boto3
+streamlit
 platformdirs
 pluggy
 psycopg2

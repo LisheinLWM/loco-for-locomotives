@@ -1,22 +1,4 @@
-"""insert docstring here"""
-
-#
-# National Rail Open Data client demonstrator
-# Copyright (C)2019-2022 OpenTrainTimes Ltd.
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
+"""Pipeline file: pulls in and cleans live XML incident data, and loads it into the incidents database schema"""
 
 import os
 import time
@@ -58,7 +40,9 @@ def connect_and_subscribe(connection, USERNAME, PASSWORD, CLIENT_ID, TOPIC):
 
 
 class StompClient(stomp.ConnectionListener):
-
+    """
+    Creates a Stomp Client class
+    """
     def on_heartbeat(self):
         logging.info('Received a heartbeat')
 
@@ -78,6 +62,12 @@ class StompClient(stomp.ConnectionListener):
         logging.info('Connecting to ' + host_and_port[0])
 
     def on_message(self, frame):
+        """
+        When a message is received, it is extracted,
+        decoded, parsed, cleaned, formatted, turned
+        into a DataFrame, and loaded into the incidents
+        schema of the database
+        """
         try:
             message_data = extract_and_transform_incident_data(
                 frame.body.decode(), namespaces)
