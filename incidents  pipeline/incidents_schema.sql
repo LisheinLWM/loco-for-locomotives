@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS incident (
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP,
     PRIMARY KEY (incident_id),
-    FOREIGN KEY (priority_id) REFERENCES priority(priority_id)
+    FOREIGN KEY (priority_id) REFERENCES priority(priority_id),
 );
 
 CREATE TABLE IF NOT EXISTS route_affected (
