@@ -160,11 +160,12 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
         labelAngle=90,
         labelColor="#1f5475",
         titleColor="#1f5475"
-    ).save("testing.png")
+    ).save("/tmp/cancellations_station.png")
 
-    with open("testing.png", "rb") as f:
-        img_bytes = f.read()
-        img = base64.b64encode(img_bytes).decode("utf-8")
+    with open("/tmp/cancellations_station.png", "rb") as f:
+        cancellations_station_img_bytes = f.read()
+        cancellations_station_img = base64.b64encode(
+            cancellations_station_img_bytes).decode("utf-8")
 
     alt.Chart(cancellations_per_company).mark_line(
         color="#B1D4E0"
@@ -180,19 +181,20 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
         labelAngle=90,
         labelColor="#1f5475",
         titleColor="#1f5475"
-    ).save("testing2.png")
+    ).save("/tmp/cancellations_company.png")
 
-    with open("testing2.png", "rb") as f:
-        img2_bytes = f.read()
-        img2 = base64.b64encode(img2_bytes).decode("utf-8")
+    with open("/tmp/cancellations_company.png", "rb") as f:
+        cancellations_per_company_img_bytes = f.read()
+        cancellations_per_company_img = base64.b64encode(
+            cancellations_per_company_img_bytes).decode("utf-8")
 
-    average_delays2 = data.groupby('origin_station_name')[
+    avg_delays_station = data.groupby('origin_station_name')[
         'arrival_lateness'].mean().reset_index()
 
-    average_delays2 = average_delays2.sort_values(by='arrival_lateness',
-                                                  ascending=False).head(20)
+    avg_delays_station = avg_delays_station.sort_values(by='arrival_lateness',
+                                                        ascending=False).head(20)
 
-    alt.Chart(average_delays2).mark_bar(
+    alt.Chart(avg_delays_station).mark_bar(
         color="#B1D4E0"
     ).encode(
         y=alt.Y('origin_station_name:N', title='STATION NAME',
@@ -207,19 +209,20 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
         labelAngle=0,
         labelColor="#1f5475",
         titleColor="#1f5475"
-    ).save('testing3.png')
+    ).save("/tmp/avg_delays_station.png")
 
-    with open("testing3.png", "rb") as f:
-        img3_bytes = f.read()
-        img3 = base64.b64encode(img3_bytes).decode("utf-8")
+    with open("/tmp/avg_delays_station.png", "rb") as f:
+        avg_delays_station_img_bytes = f.read()
+        avg_delays_station_img = base64.b64encode(
+            avg_delays_station_img_bytes).decode("utf-8")
 
-    average_delays3 = data.groupby('company_name')[
+    average_delays_per_company = data.groupby('company_name')[
         'arrival_lateness'].mean().reset_index()
 
-    average_delays3 = average_delays3.sort_values(by='arrival_lateness',
-                                                  ascending=False).head(20)
+    average_delays_per_company = average_delays_per_company.sort_values(by='arrival_lateness',
+                                                                        ascending=False).head(20)
 
-    alt.Chart(average_delays3).mark_bar(
+    alt.Chart(average_delays_per_company).mark_bar(
         color="#B1D4E0"
     ).encode(
         y=alt.Y('company_name:N', title='COMPANY NAME',
@@ -234,11 +237,12 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
         labelAngle=0,
         labelColor="#1f5475",
         titleColor="#1f5475"
-    ).save('testing4.png')
+    ).save("/tmp/avg_delays_company.png")
 
-    with open("testing4.png", "rb") as f:
-        img4_bytes = f.read()
-        img4 = base64.b64encode(img4_bytes).decode("utf-8")
+    with open("/tmp/avg_delays_company.png", "rb") as f:
+        avg_delays_company_img_bytes = f.read()
+        avg_delays_company_img = base64.b64encode(
+            avg_delays_company_img_bytes).decode("utf-8")
 
     html_content = f"""
     <!DOCTYPE html>
@@ -276,20 +280,20 @@ def export_to_html(data: pd.DataFrame, average_delays: pd.DataFrame, total_servi
             <tr>
             <td>
             <h2>Cancellations Per Station</h2>
-            <img style="width: 250; height: 200" src="data:image/png;base64,{img}">
+            <img style="width: 250; height: 200" src="data:image/png;base64,{cancellations_station_img}">
             </td>
             <td>
             <h2>Cancellations Per Company</h2>
-            <img style="width: 250; height: 200" src="data:image/png;base64,{img2}"></td>
+            <img style="width: 250; height: 200" src="data:image/png;base64,{cancellations_per_company_img}"></td>
             </tr>
             </table>
             </div>
             <div>
             <h2 align="center">Average Delays Per Station</h2>
-            <img style="width: 500; height: 200" src="data:image/png;base64,{img3}">
+            <img style="width: 500; height: 200" src="data:image/png;base64,{avg_delays_station_img}">
             </div><div>
             <h2 align="center">Average Delays Per Company</h2>
-            <img style="width: 500; height: 200" src="data:image/png;base64,{img4}">
+            <img style="width: 500; height: 200" src="data:image/png;base64,{avg_delays_company_img}">
             </div>
             <br /><br /><br /><br />
 
@@ -381,7 +385,7 @@ def lambda_handler(event=None, context=None) -> dict:
     create_report(data_df)
     yesterday = datetime.now() - timedelta(days=1)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
-    # upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
+    upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
 
     return {
         "statusCode": 200,
