@@ -1,0 +1,8 @@
+pandas
+psycopg2-binary
+boto3
+altair
+python-dotenv
+datetime
+vl-convert-python
+xhtml2pdf
