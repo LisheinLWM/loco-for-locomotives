@@ -88,3 +88,9 @@ Please refer to the Terraform section for more information on the various resour
 The incidents pipeline listens to a realtime stream of incident information release by National Rail. On receiving this data, the pipeline extracts, transforms and loads this data into the incident_data schema in the RDS database. A text message is also sent out to subscribers using the AWS SNS. All captured incident data is visualised through Streamlit.
 
 **Streamlit**
+
+### Tableau Dashboard Screenshot
+
+<img width="1107" alt="image" src="https://github.com/LisheinLWM/loco-for-locomotives/assets/112435983/14b260e3-80fe-4ee1-9e47-56e49308806b">
+
+
