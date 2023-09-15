@@ -1,3 +1,5 @@
+"""Sends messages to SNs"""
+
 from boto3 import client
 from boto3.resources.base import ServiceResource
 

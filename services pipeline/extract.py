@@ -1,4 +1,4 @@
-"""Extracts data from the Realtime Trains API and creates a CSV with the relevant data."""
+"""Extract file: extracts data from the Realtime Trains API and creates a CSV with the relevant data."""
 
 import base64
 from datetime import date, datetime, timedelta
@@ -12,8 +12,10 @@ import pandas as pd
 
 
 def get_authentication(username: str, password: str) -> str:
-    """Returns the Base64 encoding of the credentials in the form username:password."""
-
+    """
+    Returns the Base64 encoding of the credentials
+    in the form username:password
+    """
     credentials = f"{username}:{password}"
     credentials_bytes = credentials.encode("UTF-8")
     authentication_bytes = base64.b64encode(credentials_bytes)
@@ -23,9 +25,10 @@ def get_authentication(username: str, password: str) -> str:
 
 
 def get_service_data_by_station(station_crs: str, service_date: date, authentication: str) -> dict:
-    """Connects to the Realtime Trains API and returns a dictionary
-    consisting of required data."""
-
+    """
+    Connects to the Realtime Trains API and
+    returns a dictionary consisting of required data.
+    """
     url = f"https://api.rtt.io/api/v1/json/search/{station_crs}/{service_date}"
     data = {
         "Authorization": f"Basic {authentication}"
@@ -41,9 +44,10 @@ def get_service_data_by_station(station_crs: str, service_date: date, authentica
 
 
 def get_service_data_by_service(service_uid: str, service_date: date, authentication: str) -> dict:
-    """Connects to the Realtime Trains API and returns a dictionary
-    consisting of required data."""
-
+    """
+    Connects to the Realtime Trains API and returns a dictionary
+    consisting of required data
+    """
     url = f"https://api.rtt.io/api/v1/json/service/{service_uid}/{service_date}"
     data = {
         "Authorization": f"Basic {authentication}"
@@ -59,8 +63,10 @@ def get_service_data_by_service(service_uid: str, service_date: date, authentica
 
 
 def relevant_fields(journey: dict, service: dict) -> dict:
-    """Returns a dictionary containing the required information for each service."""
-
+    """
+    Returns a dictionary containing the
+    required information for each service
+    """
     arrival_lateness = None
     for location in reversed(service["locations"]):
         if location["displayAs"] == "TERMINATES" or location["displayAs"] == "DESTINATION":
@@ -113,8 +119,10 @@ def relevant_fields(journey: dict, service: dict) -> dict:
 
 def obtain_relevant_data_by_service(station_crs: str, service_date: date,
                                     authentication: str) -> list:
-    """Returns a list of all the services for a single station on a given date."""
-
+    """
+    Returns a list of all the services for
+    a single station on a given date
+    """
     list_of_services = []
 
     station_data = get_service_data_by_station(
@@ -135,16 +143,20 @@ def obtain_relevant_data_by_service(station_crs: str, service_date: date,
 
 
 def convert_to_csv(list_of_services: list, csv_filename: str = "data/service_data.csv") -> None:
-    """Takes in a list of services and creates a csv file with a row for each service."""
-
+    """
+    Takes in a list of services and creates
+    a csv file with a row for each service
+    """
     dataframe = pd.DataFrame(list_of_services)
 
     dataframe.to_csv(csv_filename, index=False)
 
 
 def create_download_folders(folder_name: str = "data") -> None:
-    """Creates a folder with the name "data" if it doesn't already exist"""
-
+    """
+    Creates a folder with the name "data"
+    if it doesn't already exist
+    """
     folder_exists = os.path.exists(folder_name)
     if not folder_exists:
         os.makedirs(folder_name)
@@ -155,7 +167,6 @@ def run_extract(authentication_realtime):
     This function is used to run the whole extract script
     so that we can pass it on to other files
     """
-
     stations = {
         "BRI": "Bristol Temple Meads",
         "WAT": "London Waterloo",

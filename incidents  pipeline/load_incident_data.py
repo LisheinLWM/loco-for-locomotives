@@ -1,3 +1,5 @@
+"""Load file: loads incident data into the database"""
+
 import os
 
 from dotenv import load_dotenv
@@ -12,8 +14,9 @@ from pandas import DataFrame
 
 
 def get_connection(host: str, db_name: str, password: str, user: str):
-    """Connects to the database"""
-
+    """
+    Connects to the database
+    """
     try:
         conn = psycopg2.connect(host=host,
                                 dbname=db_name,
@@ -26,8 +29,10 @@ def get_connection(host: str, db_name: str, password: str, user: str):
 
 
 def switch_between_schemas(conn, schema_name: str) -> None:
-    """Switches to the schema by the schema name provided"""
-
+    """
+    Switches to the schema by the 
+    schema name provided
+    """
     with conn.cursor() as cur:
         cur.execute("SET search_path TO %s", (schema_name,))
     conn.commit()

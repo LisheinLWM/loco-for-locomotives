@@ -1,3 +1,5 @@
+"""Schema file: builds the structure of the incident schema"""
+
 CREATE SCHEMA incident_data;
 
 SET search_path TO incident_data;
