@@ -1,8 +1,8 @@
 pandas
 psycopg2-binary
-xhtml2pdf
 boto3
 altair
 python-dotenv
-vl-convert-python
 datetime
+vl-convert-python
+xhtml2pdf

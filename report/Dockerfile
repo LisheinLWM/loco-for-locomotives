@@ -1,13 +1,11 @@
-FROM public.ecr.aws/lambda/python
-
-WORKDIR ${LAMBDA_TASK_ROOT}
+FROM python
 
 COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+RUN pip3 install -r requirements.txt
 
 COPY logo.png .
 
-COPY report.py .
+COPY get_pdf.py .
 
-CMD ["report.lambda_handler"]
+CMD ["python3","get_pdf.py"]

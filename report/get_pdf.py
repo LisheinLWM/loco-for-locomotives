@@ -10,6 +10,8 @@ from xhtml2pdf import pisa
 from boto3 import client
 import altair as alt
 from altair.vegalite.v5.api import Chart
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
 
 CSV_COLUMNS = [
     "cancel_code_id",
@@ -373,12 +375,40 @@ def upload_to_s3_bucket(file_name):
                        aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
 
     amazon_s3.upload_file(
-        f'/tmp/{file_name}',
+        file_name,
         'disruption-detect-daily-reports',
-        f'{file_name}')
+        file_name)
 
 
-def lambda_handler(event=None, context=None) -> dict:
+def send_email(file_name):
+
+    e_client = client("ses",
+                      region_name="eu-west-2",
+                      aws_access_key_id=environ["ACCESS_KEY_ID"],
+                      aws_secret_access_key=environ["SECRET_ACCESS_KEY_ID"])
+    message = MIMEMultipart()
+    message["Subject"] = "Your Daily Report"
+
+    attachment = MIMEApplication(open(file_name, 'rb').read())
+    attachment.add_header('Content-Disposition',
+                          'attachment', filename=file_name)
+    message.attach(attachment)
+
+    print(message)
+
+    e_client.send_raw_email(
+        Source='dan.keefe@sigmalabs.co.uk',
+        Destinations=[
+            'dan.keefe@sigmalabs.co.uk', 'trainee.harry.plant@sigmalabs.co.uk',
+            'trainee.annie.mahmood@sigmalabs.co.uk'
+        ],
+        RawMessage={
+            'Data': message.as_string()
+        }
+    )
+
+
+def main():
     load_dotenv()
     connection = get_db_connection()
     data_df = get_data_from_database(connection)
@@ -386,12 +416,8 @@ def lambda_handler(event=None, context=None) -> dict:
     yesterday = datetime.now() - timedelta(days=1)
     yesterday_date = yesterday.strftime("%d-%m-%Y")
     upload_to_s3_bucket(f"daily_report_{yesterday_date}.pdf")
-
-    return {
-        "statusCode": 200,
-        "body": "Hello"
-    }
+    send_email(f"daily_report_{yesterday_date}.pdf")
 
 
 if __name__ == "__main__":
-    lambda_handler()
+    main()
