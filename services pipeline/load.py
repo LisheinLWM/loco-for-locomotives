@@ -99,13 +99,13 @@ def insert_delay_details(conn: connection, data: pd.DataFrame) -> None:
     is great that 0 into the delay details table
     """
 
-    details = data[["service_uid", "arrival_lateness",
+    details = data[["service_uid", "origin_run_datetime", "arrival_lateness",
                     "scheduled_arrival_datetime"]]
     delays = details[data["arrival_lateness"] > 0].values.tolist()
 
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO delay_details (service_details_id, arrival_lateness, scheduled_arrival)
-                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s),
+                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s AND run_date = %s),
                         %s, %s) ON CONFLICT DO NOTHING;""", delays)
     conn.commit()
 
@@ -113,13 +113,13 @@ def insert_delay_details(conn: connection, data: pd.DataFrame) -> None:
 def insert_cancellations(conn: connection, data: pd.DataFrame) -> None:
     """Inserts all cancellations into the database"""
 
-    details = data[["service_uid", "cancellation_station_crs",
+    details = data[["service_uid", "origin_run_datetime", "cancellation_station_crs",
                    "destination_reached_crs", "cancel_code"]]
     cancellations = details[data["cancel_code"].notna()].values.tolist()
 
     with conn.cursor() as cur:
         cur.executemany("""INSERT INTO cancellation (service_details_id, cancelled_station_id, reached_station_id, cancel_code_id)
-                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s),
+                        VALUES ((SELECT service_details_id FROM service_details WHERE service_uid = %s AND run_date = %s),
                         (SELECT station_id FROM station WHERE crs = %s),
                         (SELECT station_id FROM station WHERE crs = %s), (SELECT cancel_code_id FROM cancel_code WHERE code = %s))
                         ON CONFLICT DO NOTHING""", cancellations)
@@ -141,7 +141,7 @@ def run_load(conn):
     insert_delay_details(conn, data)
     insert_cancellations(conn, data)
 
-    os.remove("data/transformed_service_data.csv")
+    # os.remove("data/transformed_service_data.csv")
 
     end_time = time.time()
     elapsed_time = end_time - start_time

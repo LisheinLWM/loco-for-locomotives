@@ -4,6 +4,7 @@ Streamlit dashboard application code.
 Module contains code for connecting to postgres database (RDS)
 and using that data to create charts for data analysis.
 """
+
 from datetime import datetime, timedelta
 import sys
 from os import environ
