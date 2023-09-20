@@ -288,7 +288,7 @@ def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
     route_avg_incidents = df.groupby(['route_name', df['start_time'].dt.date])['incident_id'].count().reset_index()
     route_avg_incidents = route_avg_incidents.rename(columns={'incident_id': 'avg_incidents'})
 
-    st.subheader("AVERAGE INCIDENTS PER DAY BY BY ROUTE\n")
+    st.subheader("AVERAGE INCIDENTS PER DAY BY ROUTE\n")
 
     bar_chart = alt.Chart(route_avg_incidents).mark_bar().encode(
         x=alt.X('route_name:N', title='Route'),
@@ -312,7 +312,7 @@ def bar_graph_to_show_incidents_per_day(incident_df: DataFrame):
     daily_incident_counts = filtered_incident_df.groupby(filtered_incident_df['start_time'].dt.date)['incident_id'].count().reset_index()
     daily_incident_counts = daily_incident_counts.rename(columns={'start_time': 'Date', 'incident_id': 'Incident Count'})
 
-    st.subheader("INCIDENTS PER DAY (PAST MONTH)\n")
+    st.subheader("NUMBER OF INCIDENTS PER DAY (PAST MONTH)\n")
 
     bar_chart = alt.Chart(daily_incident_counts).mark_bar().encode(
         x=alt.X('Date:T', title='Date'),
@@ -344,9 +344,9 @@ def scatter_plot_to_show_incident_freq_vs_customer_satisfaction(incident_df: Dat
     ).properties(
         width=600,
         height=400,
-        title='Operator Average Daily Incidents vs. Customer Satisfaction (Scatter Plot)'
     )
 
+    st.subheader("AVERAGE DAILY INCIDENTS VS CUSTOMER SATISFACTION BY OPERATOR\n")
     st.altair_chart(scatter_plot, use_container_width=True)
 
 
