@@ -86,7 +86,6 @@ def display_headline_figures(incident_df: DataFrame):
         incident_priority_counts = incident_df['priority_code'].value_counts()
         priority_with_highest_count = incident_priority_counts.idxmax()
         highest_incident_priority_count = incident_priority_counts.max()
-
         st.metric("MOST COMMON INCIDENT PRIORITY", f"{priority_with_highest_count} ({highest_incident_priority_count})")
 
 
