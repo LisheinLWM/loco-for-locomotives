@@ -10,6 +10,6 @@ COPY .streamlit ./.streamlit
 
 COPY pages ./pages
 
-COPY key_metrics.py .
+COPY Key_Metrics.py .
 
-CMD ["streamlit", "run", "key_metrics.py", "--server.port=8501", "--server.address=0.0.0.0"]
+CMD ["streamlit", "run", "Key_Metrics.py", "--server.port=8501", "--server.address=0.0.0.0"]
