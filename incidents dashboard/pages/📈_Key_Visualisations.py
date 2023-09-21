@@ -89,66 +89,26 @@ def display_headline_figures(incident_df: DataFrame):
         st.metric("MOST COMMON INCIDENT PRIORITY", f"{priority_with_highest_count} ({highest_incident_priority_count})")
 
 
-def display_most_recent_incident(conn):
+def display_active_incidents(data: DataFrame):
     """
     Uses Streamlit to display a table of the most
     recent incidents, pulled from the database with
     an SQL query.
     """
-    with conn.cursor() as cur:
-
-        query = """
-            SELECT
-            i.incident_num as "Incident Number",
-            i.summary as "Incident Summary",
-            p.priority_code as "Incident Priority",
-            i.incident_version,
-            i.link,
-            i.start_time,
-            i.end_time,
-            string_agg(DISTINCT r.route_name, ', ') as "Affected Routes",
-            string_agg(DISTINCT o.operator_name, ', ') as "Affected Operators"
-        FROM
-            incident i
-        LEFT JOIN
-            priority p
-        ON
-            i.priority_id = p.priority_id
-        LEFT JOIN
-            incident_route_link irl
-        ON
-            i.incident_id = irl.incident_id
-        LEFT JOIN
-            route_affected r
-        ON
-            irl.route_id = r.route_id
-        LEFT JOIN
-            incident_operator_link iol
-        ON
-            i.incident_id = iol.incident_id
-        LEFT JOIN
-            operator o
-        ON
-            iol.operator_id = o.operator_id
-        GROUP BY
-            i.incident_num,
-            i.incident_version,
-            i.link,
-            i.summary,
-            p.priority_code,
-            i.start_time,
-            i.end_time
-        LIMIT 100;
-        """
-
-        data = pd.read_sql_query(query, conn)
-    
-    conn.commit()
-    
-    idx = data.groupby('Incident Number')['incident_version'].idxmax()
+    idx = data.groupby('incident_num')['incident_version'].idxmax()
     data = data.loc[idx]
 
-    st.subheader("MOST RECENT INCIDENTS:")
+    data = data[['incident_num', 'operator_name', 'summary', 'route_name',
+                 'link', 'priority_code', 'start_time', 'end_time', 'is_planned']]
+    data.columns = ['Incident Number', 'Operator Name', 'Summary', 'Affected Routes',
+                    'Link', 'Priority Code', 'Start Time', 'End Time', 'Is Planned']
+
+    current_time = datetime.now()
+    data = data[(data['Start Time'] <= current_time) & 
+                ((current_time <= data['End Time']) |
+                data['End Time'].isna())]
+
+    st.subheader("ACTIVE INCIDENTS:")
     st.markdown("""<style>
             thead tr th:first-child {display:none}
             tbody th {display:none}
@@ -178,7 +138,7 @@ def calculate_total_subscriptions(sns_client: ServiceResource, operator_list: li
     return count
 
 
-def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: list[str],
+def show_metrics_for_given_operator(sns_client: ServiceResource, operators_dict: dict,
                                     incident_df: DataFrame):
     """
     Displays specific statistics for the
@@ -186,11 +146,12 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
     """
     idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
     incident_df = incident_df.loc[idx]
-    code = st.selectbox('SELECT OPERATOR TO VIEW METRICS FOR', options=operator_list)
+    operator_name = st.selectbox('SELECT OPERATOR TO VIEW METRICS FOR', options=operators_dict.keys())
+    code = operators_dict.get(operator_name)
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.metric("TOTAL SUBSCRIPTIONS, ALL OPERATORS",
-                  calculate_total_subscriptions(sns_client, operator_list))
+                  calculate_total_subscriptions(sns_client, operators_dict.values()))
     with col2:
         st.metric(f"{code} SUBSCRIBER COUNT", get_subscription_count(sns_client, code))
     with col3:
@@ -204,7 +165,7 @@ def show_metrics_for_given_operator(sns_client: ServiceResource, operator_list: 
         st.metric(f"{code} ACTIVE INCIDENTS", len(current_incidents))
 
 
-def create_incident_subscription_form(operator_list: list[str]):
+def create_incident_subscription_form(operator_dict: dict):
     """
     Creates a form which allows users to input
     information and subscribe their number to
@@ -213,11 +174,12 @@ def create_incident_subscription_form(operator_list: list[str]):
     with st.form(clear_on_submit=True, key="subscribe_form"):
         st.subheader("SUBSCRIBE TO GET INCIDENT NOTIFICATIONS")
         phone_number = st.text_input("PHONE NUMBER (INCL. AREA CODE)")
-        operator = st.selectbox("OPERATOR", options=operator_list)
+        operator_name = st.selectbox("OPERATOR", options=operator_dict.keys())
+        code = operator_dict.get(operator_name)
         submit_button = st.form_submit_button("SUBSCRIBE")
         if submit_button:
-            print(operator, phone_number)
-            subscribe_to_topic(sns_client, phone_number, operator)    
+            print(code, phone_number)
+            subscribe_to_topic(sns_client, phone_number, code)    
 
 
 def retrieve_incident_data_as_dataframe(conn: connection) -> DataFrame:
@@ -301,15 +263,15 @@ def bar_graph_avg_incidents_per_day_per_operator(df: DataFrame) -> None:
 
     st.subheader("AVERAGE INCIDENTS PER DAY BY OPERATOR\n")
 
-    chart = alt.Chart(operator_avg_incidents).mark_bar().encode(
-        x='operator_code:N',
-        y='mean(avg_incidents):Q',
+    bar_chart = alt.Chart(operator_avg_incidents).mark_bar().encode(
+        x=alt.X('operator_code:N', title='Operator'),
+        y=alt.Y('mean(avg_incidents):Q', title='Average Incidents per Day'),
         color='operator_code:N'
     ).properties(
         width=600
     )
 
-    st.altair_chart(chart, use_container_width=True)
+    st.altair_chart(bar_chart, use_container_width=True)
 
 
 def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
@@ -318,12 +280,15 @@ def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
     average number of incidents per day
     for each route
     """
+    idx = df.groupby('incident_num')['incident_version'].idxmax()
+    df = df.loc[idx]
+
     df['start_time'] = pd.to_datetime(df['start_time'])
 
     route_avg_incidents = df.groupby(['route_name', df['start_time'].dt.date])['incident_id'].count().reset_index()
     route_avg_incidents = route_avg_incidents.rename(columns={'incident_id': 'avg_incidents'})
 
-    st.subheader("AVERAGE INCIDENTS PER DAY BY PER ROUTE\n")
+    st.subheader("AVERAGE INCIDENTS PER DAY BY ROUTE\n")
 
     bar_chart = alt.Chart(route_avg_incidents).mark_bar().encode(
         x=alt.X('route_name:N', title='Route'),
@@ -335,6 +300,56 @@ def bar_graph_avg_incidents_per_day_per_route(df: DataFrame) -> None:
     bar_chart
 
 
+def bar_graph_to_show_incidents_per_day(incident_df: DataFrame):
+
+    current_time = datetime.now()
+    one_month_ago = current_time - pd.DateOffset(months=1)
+
+    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
+    incident_df = incident_df.loc[idx]
+    filtered_incident_df = incident_df[(incident_df['start_time'] >= one_month_ago) & (incident_df['start_time'] <= current_time)]
+
+    daily_incident_counts = filtered_incident_df.groupby(filtered_incident_df['start_time'].dt.date)['incident_id'].count().reset_index()
+    daily_incident_counts = daily_incident_counts.rename(columns={'start_time': 'Date', 'incident_id': 'Incident Count'})
+
+    st.subheader("NUMBER OF INCIDENTS PER DAY (PAST MONTH)\n")
+
+    bar_chart = alt.Chart(daily_incident_counts).mark_bar().encode(
+        x=alt.X('Date:T', title='Date'),
+        y=alt.Y('Incident Count:Q', title='Incident Count')
+    ).properties(
+        width=800
+    )
+
+    st.altair_chart(bar_chart, use_container_width=True)
+
+
+def scatter_plot_to_show_incident_freq_vs_customer_satisfaction(incident_df: DataFrame):
+
+    idx = incident_df.groupby('incident_num')['incident_version'].idxmax()
+    incident_df = incident_df.loc[idx]
+
+    operator_stats = incident_df.groupby('operator_name').agg({
+        'incident_id': 'count',
+        'customer_satisfaction': 'mean'
+    }).reset_index()
+
+    operator_stats.columns = ['Operator', 'Average Daily Incidents', 'Customer Satisfaction']
+
+    scatter_plot = alt.Chart(operator_stats).mark_circle().encode(
+        x='Average Daily Incidents:Q',
+        y='Customer Satisfaction:Q',
+        color='Operator:N',
+        tooltip=['Operator', 'Average Daily Incidents', 'Customer Satisfaction']
+    ).properties(
+        width=600,
+        height=400,
+    )
+
+    st.subheader("AVERAGE DAILY INCIDENTS VS CUSTOMER SATISFACTION BY OPERATOR\n")
+    st.altair_chart(scatter_plot, use_container_width=True)
+
+
 if __name__ == "__main__":
 
     load_dotenv()
@@ -344,29 +359,56 @@ if __name__ == "__main__":
     incident_df = retrieve_incident_data_as_dataframe(conn)
 
     sns_client = generate_sns_client(environ)
-    
-    operator_list = ['LO', 'VT', 'CC', 'CS', 'CH', 'XC',
-                    'EM', 'XR', 'ES', 'GC', 'LE', 'GW',
-                    'HX', 'HT', 'GR', 'LD', 'ME', 'NT',
-                    'SR', 'SE', 'TP', 'AW', 'LM', 'GX',
-                    'GN', 'SN', 'TL', 'SW', 'IL']
 
-    st.title("DISRUPTION DETECT: INCIDENTS")
-    st.divider()
-    display_headline_figures(incident_df)
-    st.divider()
-    show_metrics_for_given_operator(sns_client, operator_list, incident_df)
-    st.divider()
-    create_incident_subscription_form(operator_list)
-    st.divider()
-    display_most_recent_incident(conn)
+    operators_dict = {
+        "London Overground": "LO",
+        "Avanti West Coast": "VT",
+        "c2c": "CC",
+        "Caledonian Sleeper": "CS",
+        "Chiltern Railways": "CH",
+        "CrossCountry": "XC",
+        "East Midlands Railway": "EM",
+        "Elizabeth line": "XR",
+        "Eurostar": "ES",
+        "Gatwick Express": "GX",
+        "Great Northern": "GN",
+        "Southern": "SN",
+        "Thameslink": "TL",
+        "Grand Central": "GC",
+        "Greater Anglia (also operating Stansted Express)": "LE",
+        "Great Western Railway": "GW",
+        "Heathrow Express": "HX",
+        "Hull Trains": "HT",
+        "London North Eastern Railway": "GR",
+        "Lumo": "LD",
+        "Merseyrail": "ME",
+        "Northern Trains (Trading as Northern)": "NT",
+        "ScotRail": "SR",
+        "Southeastern": "SE",
+        "South Western Railway": "SW",
+        "Island Line": "IL",
+        "TransPennine Trains (Trading as TransPennine Express)": "TP",
+        "Transport for Wales Rail": "AW",
+        "West Midlands Trains": "LM"
+    }
 
-    st.divider()
+    st.title("DISRUPTION DETECT: VISUALISATIONS")
+
     selected_operators = st.sidebar.multiselect("Operator", set(incident_df["operator_name"].unique().tolist()))
     operator_filtered_df = incident_df[incident_df['operator_name'].isin(selected_operators)]
     bar_graph_avg_incidents_per_day_per_operator(operator_filtered_df)
 
     st.divider()
-    selected_routes = st.sidebar.multiselect("Route", set(incident_df["route_name"].unique().tolist()))
+    invalid_routes = ["to", "trains to", "services to", "all routes to"]
+    selected_routes = st.sidebar.multiselect("Route", set([route for route in 
+                                                           incident_df["route_name"].unique().tolist()
+                                                           if (route is None or
+                                                               route.strip().lower() not in invalid_routes)]))
     route_filtered_df = incident_df[incident_df['route_name'].isin(selected_routes)]
     bar_graph_avg_incidents_per_day_per_route(route_filtered_df)
+
+    st.divider()
+    bar_graph_to_show_incidents_per_day(incident_df)
+
+    st.divider()
+    scatter_plot_to_show_incident_freq_vs_customer_satisfaction(incident_df)
